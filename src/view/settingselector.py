@@ -1,0 +1,3 @@
+
+class SettingSelector():
+	pass
