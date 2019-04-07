@@ -1,1 +1,1 @@
-"# exjobb" 
+run src/startup/main.py
