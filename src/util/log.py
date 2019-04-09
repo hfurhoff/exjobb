@@ -12,9 +12,10 @@ class Log():
 		self.entries = []
 		self.created = time.time()
 		self.vehicle = args[0]
-		self.update(self.vehicle)
 		if len(args) > 1:
-			self.entries = args[1]
+			self.entries = copy.deepcopy(args[1])
+		else:
+			self.update(self.vehicle)
 	
 	def getLogSince(self, entry):
 		subentries = self.entries[self.entries.index(entry):]
@@ -43,3 +44,6 @@ class Log():
 			le = self.entries[i]
 			s.append('Entry ' + repr(i) + ': ' + le.toString())
 		return s
+		
+	def getTimestepLength(self):
+		return self.vehicle.getTimestepLength()

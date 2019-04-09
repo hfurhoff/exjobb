@@ -19,28 +19,44 @@ class MatrixMap(Searcharea):
 	halfSideLength = None
 	cells = None
 	data = None
+	mean = 0
+	stddev = 0.5
 	
 	class Cell():
 	
 		prob = 0
 		visited = False
+		active = False
+		x = None
+		y = None
+		t = False
 	
-		def __init__(self):
-			pass
+		def __init__(self, x, y, target):
+			self.x = x
+			self.y = y
+			self.target = target
+			tx, ty = int(target.getX()), int(target.getY())
+			self.t = x == tx and y == ty
 	
 		def getProb(self):
 			return self.prob
 			
 		def setProb(self, prob):
 			self.prob = prob
+			
+		def setActive(self):
+			self.active = True
 		
 		def visit(self):
-			self.prob *= 0.5
+			self.prob *= 0.2
 			self.visited = True
 			
 		def hasBeenVisited(self):
 			return self.visited
-	
+			
+		def hasTarget(self):
+			return self.t
+			
 	def __init__(self, a):
 		self.height = int(a.getHeight())
 		self.width = int(a.getWidth())
@@ -49,6 +65,20 @@ class MatrixMap(Searcharea):
 		
 		self.halfSideLength = 0.6 * self.bigDia()
 
+		targetx = None
+		targety = None
+		try:
+			targetx = float(t.getX())
+			targety = float(t.getY())
+		except:	
+			targetx, targety = self.randTarget()
+			while self.radiusFromCenter(targetx, targety) > 1:
+				targetx, targety = self.randTarget()
+		print('Target is at ' + Point(targetx, targety).toString())
+		targetx = targetx + self.halfSideLength
+		targety = self.halfSideLength - targety
+		self.target = Point(targetx, targety)
+
 		self.cells = int((self.halfSideLength * 2) / self.gridsize) + 1
 		self.data = [None] * self.cells
 		for i in range(self.cells):
@@ -56,38 +86,27 @@ class MatrixMap(Searcharea):
 			
 		for i in range(self.cells):
 			for j in range(self.cells):
-				self.data[i][j] = self.Cell()
+				self.data[i][j] = self.Cell(j, i, self.target)
+				
+		print('datalen ' + repr(len(self.data)))
+		print('cells ' + repr(self.cells))
 				
 		for yindex in range(self.cells):
 			for xindex in range(self.cells):
 				y = yindex - self.halfSideLength
 				x = xindex - self.halfSideLength
-				if self.radFromCenter(x, y) <= 1:
-					self.data[yindex][xindex].setProb(norm.pdf(self.radFromCenter(x, y), 0, 0.5))
-
-		x = None
-		y = None
-		try:
-			x = int(t.getX())
-			y = int(t.getY())
-		except:	
-			x, y = self.randTarget()
-			while self.radFromCenter(x, y) > 1:
-				x, y = self.randTarget()
-		print('Target is at ' + Point(x, y).toString())
-		x = int(x + self.halfSideLength)
-		y = int(self.halfSideLength - y)
-		self.target = Point(x, y)
-		#self.data[y][x] = 1
+				if self.radiusFromCenter(x, y) <= 1:
+					self.data[yindex][xindex].setProb(norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev))
+					self.data[yindex][xindex].setActive()
 	
 	def randTarget(self):
 		ex = (self.width / 2)
 		ey = (self.height / 2)
-		x = int(norm.rvs(0, 0.5)*ex)
-		y = int(norm.rvs(0, 0.5)*ey)
+		x = norm.rvs(self.mean, self.stddev)*ex
+		y = norm.rvs(self.mean, self.stddev)*ey
 		return x, y
 	
-	def radFromCenter(self, x, y):
+	def radiusFromCenter(self, x, y):
 		return (np.power(x, 2) / np.power((self.width / 2), 2)) + (np.power(y, 2) / np.power((self.height / 2), 2))
 	
 	def bigDia(self):
@@ -95,10 +114,12 @@ class MatrixMap(Searcharea):
 		
 	def updateSearchBasedOnLog(self, log):
 		returnData = []
-		print(log.toString())
-		print(repr(log.length()))
+		#print(log.toString())
+		#print(repr(log.length()))
+		
+		dt = log.getTimestepLength()
+		
 		for i in range(log.length() - 1):
-			print(repr(i) + ' ' + log.get(i).toString() + ' ' + repr(i + 1) + ' ' + log.get(i + 1).toString())
 			logFrom = log.get(i)
 			logTo = log.get(i + 1)
 			
@@ -110,13 +131,23 @@ class MatrixMap(Searcharea):
 			tX = posTo.getX()
 			tY = posTo.getY()
 			
-			hypo = int((np.sqrt([np.power(fX - tX, 2) + np.power(fY - tY, 2)])[0]) / self.gridsize) + 1
-			for j in range(hypo + 1):
-				xPos = int(fX * (1.0 - (float(j) / float(hypo))) + int(self.halfSideLength))
-				yPos = int(fY * (1.0 - (float(j) / float(hypo))) + int(self.halfSideLength))
+			dX = tX - fX
+			dY = tY - fY
+			
+			steps = 10
+			
+			for s in range(steps + 1):
+				xPos = int(fX + (dX * s / steps)) + int(self.halfSideLength)
+				yPos = int(fY + (dY * s / steps)) + int(self.halfSideLength)
 				if not self.data[yPos][xPos].hasBeenVisited():
 					self.data[yPos][xPos].visit()
-					returnData.append(SearchareaDTO([copy.deepcopy(self)]))
+					if self.data[yPos][xPos].hasTarget():
+						for yindex in range(self.cells):
+							for xindex in range(self.cells):
+								self.data[yindex][xindex].setProb(0)
+						self.data[yPos][xPos].setProb(1)
+						
+			returnData.append(SearchareaDTO([self]))
 			
 		return returnData
 		
@@ -143,5 +174,5 @@ class MatrixMap(Searcharea):
 		return self.halfSideLength
 		
 	def getTarget(self):
-		return self.target
+		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
 		

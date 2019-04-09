@@ -24,3 +24,6 @@ class LogEntry():
 		
 	def getTimestamp(self):
 		return self.timestamp
+	
+	def getSpeed(self):
+		return self.speed

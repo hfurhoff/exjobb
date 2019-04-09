@@ -10,13 +10,15 @@ import numpy as np
 
 class Vehicle():
 
-	pose = None
+	pose = None #TODO:convert to lat/long
 	desiredHeading = None
-	currentSpeed = None
+	currentSpeed = None #m/s
+	desiredSpeed = None
 	maxSpeed = None
 	turningRadius = None
 	log = None
 	sensor = None
+	timestepLength = 1 #seconds
 
 	def __init__(self, v):
 		from dto.vehicledto import VehicleDTO
@@ -30,10 +32,6 @@ class Vehicle():
 		
 	def getTurningRadiusBasedOnCurrentSpeed(self):
 		pass
-		
-	def moveToOrigo(self):
-		self.pose.setPosition(Point(0, 0))
-		self.updateLog()
 
 	def latestLogEntry(self):
 		return self.log.latestLogEntry()
@@ -56,14 +54,15 @@ class Vehicle():
 	def updatePose(self, numberOfTimesteps):
 		for i in range(numberOfTimesteps):
 			p = self.getPosition()
-			hypo = self.currentSpeed
+			hypo = self.currentSpeed * self.timestepLength
 			course = np.radians((-self.pose.getOrientation()) + 90)
+			
 			dx = hypo * np.cos(course)
 			dy = hypo * np.sin(course)
 			x, y = p.getX(), p.getY()
 			
 			self.pose = Pose(self.pose.getOrientation(), Point(x + dx, y + dy))
-			print(self.getPosition().toString())
+			#print(self.getPosition().toString())
 			self.updateLog()
 		
 	def updateLog(self):
@@ -90,6 +89,12 @@ class Vehicle():
 	def getLog(self):
 		return self.log
 		
-	def atOrigo(self):
-		p = self.getPosition()
-		return int(p.getX()) == 0 and int(p.getY()) == 0
+	def atPosition(self, p):
+		pos = self.getPosition()
+		return int(p.getX()) == int(pos.getX()) and int(p.getY()) == int(pos.getY())
+		
+	def getTimestepLength(self):
+		return self.timestepLength
+		
+	def setPosition(self, p):
+		self.pose = Pose(self.pose.getOrientation(), p)

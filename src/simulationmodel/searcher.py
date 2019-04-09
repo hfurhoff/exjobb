@@ -31,7 +31,7 @@ class Searcher():
 		self.lastEntry = self.vehicle.latestLogEntry()
 		self.firstEntry = self.lastEntry
 		self.strategy.test()
-		self.ackumulatedSearch = []
+		self.ackumulatedSearch = [SearchareaDTO([self.area])]
 		
 	def getSearcharea(self):
 		sa = SearchareaDTO([self.area])
@@ -43,10 +43,15 @@ class Searcher():
 		foundTarget = False
 		self.vehicle.setCourseTowards(Point(0, 0))
 		print(self.vehicle.getPosition().toString())
-		while (not self.vehicle.atOrigo()) and (not foundTarget):
+		while (not self.vehicle.atPosition(Point(0, 0))) and (not foundTarget):
 			self.vehicle.updatePose(1)
 			foundTarget = self.strategy.foundTarget()
-
+		
+		if foundTarget:
+			target = self.area.getTarget()
+			self.vehicle.setPosition(target)
+			self.vehicle.updateLog()
+		
 		sublog = self.vehicle.logFrom(le)
 		data = self.area.updateSearchBasedOnLog(sublog)
 		#self.ackumulatedSearch.append(data[-1])
@@ -57,6 +62,9 @@ class Searcher():
 		
 	def getAckumulatedSearch(self):
 		return self.ackumulatedSearch
+		
+	def getLog(self):
+		return self.vehicle.getLog()
 		
 	def addObserver(self, obs):
 		pass

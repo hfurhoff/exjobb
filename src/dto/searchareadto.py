@@ -3,6 +3,7 @@ from dto.pdf import PDF
 from dto.target import Target
 from dto.logentry import LogEntry
 from dto.point import Point
+import copy
 
 class SearchareaDTO():
 
@@ -16,13 +17,14 @@ class SearchareaDTO():
 	
 	def __init__(self, args):
 		if len(args) == 1:
-			self.height = int(args[0].getHeight())
-			self.width = int(args[0].getWidth())
-			self.gridsize = args[0].getGridsize()
-			self.data = args[0].getData()
+			area = copy.deepcopy(args[0])
+			self.height = int(area.getHeight())
+			self.width = int(area.getWidth())
+			self.gridsize = area.getGridsize()
+			self.data = area.getData()
 			self.cells = len(self.data[0])
-			self.halfSideLength = args[0].getHalfSideLength()
-			self.target = args[0].getTarget()
+			self.halfSideLength = area.getHalfSideLength()
+			self.target = area.getTarget()
 		else:
 			self.height = args[0]
 			self.width = args[1]

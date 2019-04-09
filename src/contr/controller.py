@@ -38,6 +38,9 @@ class Controller():
 		
 	def getAckumulatedSearch(self):
 		return self.simManager.getAckumulatedSearch()
+		
+	def getLog(self):
+		return self.simManager.getLog()
 	
 	def addObserver(self, obs):
 		pass

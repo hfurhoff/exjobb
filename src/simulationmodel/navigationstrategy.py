@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from dto.course import Course
 from simulationmodel.vehicle import Vehicle
 from simulationmodel.searcharea import Searcharea
+from dto.point import Point
 
 
 class NavigationStrategy:
@@ -18,9 +19,14 @@ class NavigationStrategy:
 		pass
 		
 	def foundTarget(self):
+		print('checking')
 		vp = self.vehicle.getPosition()
 		tp = self.area.getTarget()
-		return vp.equals(tp)
+		print(vp.toString() + ' ' + tp.toString())
+		found = int(vp.getX()) == int(tp.getX()) and int(vp.getY()) == int(tp.getY())
+		if(found):
+			print('found target')
+		return found
 		
 	def setVehicleAndArea(self, vehicle, area):
 		self.vehicle = vehicle

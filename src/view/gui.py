@@ -3,7 +3,8 @@ from tkFileDialog import askopenfilename, asksaveasfilename
 import re
 import os
 
-from view.plot import Plot
+from view.searchplot import SearchPlot
+from view.realityplot import RealityPlot
 from view.settingselector import SettingSelector
 from contr.controller import Controller
 from dto.searchareadto import SearchareaDTO
@@ -13,7 +14,6 @@ from dto.settings import Settings
 
 class GUI(Frame):
 	
-	_GRIDSIZE = 1
 	_HEIGHTINDEX = 0
 	_WIDTHINDEX = 1
 	_COURSEINDEX = 2
@@ -22,6 +22,7 @@ class GUI(Frame):
 	_TARGETXINDEX = 5
 	_TARGETYINDEX = 6
 	_RUNSINDEX = 7
+	_GRIDSIZEINDEX = 8
 	
 	contr = Controller.getInstance()
 	
@@ -35,16 +36,17 @@ class GUI(Frame):
 	buts = []
 	entries = []
 	
-	textFields = [	'Searcharea height(m)', 
-					'Searcharea width(m)', 
+	textFields = [	'Searcharea height (m)', 
+					'Searcharea width (m)', 
 					'Initial course (degrees)', 
-					'Timestep length(s)', 
+					'Timestep length (s)', 
 					'Vehicle max speed (m/s)', 
 					'Target X-coordinate', 
 					'Target Y-coordinate', 
-					'Number of runs']
+					'Number of runs',
+					'Gridsize (m)']
 
-	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1]
+	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1]
 	strategy = "greedy.py"
 
 	def newFile(self):
@@ -77,15 +79,17 @@ class GUI(Frame):
 	def showSearcharea(self):
 		self.readInputFields()
 		for i in range(int(self.values[self._RUNSINDEX])):
-			plt = Plot(self._GRIDSIZE)
+			searchplt = SearchPlot(self.values[self._GRIDSIZEINDEX])
 			premises = self.getPremises()
 			self.contr.setupSimulation(premises)
-			plt.showSearcharea(self.contr.getSearcharea())
+			searchplt.showSearcharea(self.contr.getSearcharea())
 
 	def showSimulation(self):
-		plt = Plot(self._GRIDSIZE)
 		self.readInputFields()
-		plt.showSimulation(self.contr.getAckumulatedSearch(), self.values[self._TIMESTEPINDEX])
+		searchplt = SearchPlot(self.values[self._GRIDSIZEINDEX])
+		#realityplt = RealityPlot(self.values[self._GRIDSIZEINDEX])
+		searchplt.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX])
+		#realityplt.playLog(self.contr.getLog(), self.contr.getSearcharea(), self.values[self._TIMESTEPINDEX])
 
 	def processSearch(self):
 		self.readInputFields()
@@ -95,7 +99,7 @@ class GUI(Frame):
 		print('ready to show simulation')
 
 	def getPremises(self):
-		return Settings(self.values[self._HEIGHTINDEX], self.values[self._WIDTHINDEX], self.values[self._COURSEINDEX], self.strategy[:-3], None, None, self._GRIDSIZE, self.values[self._MAXSPEEDINDEX], self.values[self._TARGETXINDEX], self.values[self._TARGETYINDEX])
+		return Settings(self.values[self._HEIGHTINDEX], self.values[self._WIDTHINDEX], self.values[self._COURSEINDEX], self.strategy[:-3], None, None, self.values[self._GRIDSIZEINDEX], self.values[self._MAXSPEEDINDEX], self.values[self._TARGETXINDEX], self.values[self._TARGETYINDEX])
 
 	def createWidgets(self, root):
 		menu = Menu(root)

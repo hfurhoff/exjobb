@@ -5,6 +5,9 @@ from dto.event import Event
 from dto.searchareadto import SearchareaDTO
 from dto.vehicledto import VehicleDTO
 from dto.pose import Pose
+from dto.logentry import LogEntry
+from dto.pose import Pose
+from dto.point import Point
 
 import numpy as np
 import matplotlib.colors as colors
@@ -15,7 +18,7 @@ from matplotlib.colors import Normalize
 from matplotlib import cm
 from scipy.stats import norm
 
-class Plot(Observer):
+class SearchPlot(Observer):
 	
 	gridsize = 1
 	
@@ -40,18 +43,40 @@ class Plot(Observer):
 	def radFromCenter(self, x, ex, y, ey):
 		return (np.power(x, 2) / np.power(ex, 2)) + (np.power(y, 2) / np.power(ey, 2))
 		
-	def showSimulation(self, data, timestepLength):
+	def showSimulation(self, data, log, timestepLength):
 		#print(repr(data))
 		#print(repr(range(len(data))))
-		fig, ax = plt.subplots()
+		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6, 4.8])
 		halfSideLength = int(data[0].getHalfSideLength())
-
+		world = [0] * len(data)
+		for c in world:
+			c = [0] * len(data)
+		
+		target = data[0].getTarget()
+		targetx = target.getX()
+		targety = target.getY()
+		#ax[1].set_axis_off()
+		xpath = []
+		ypath = []
+		
 		for i in range(len(data)):
-			ax.cla()
-			ax.set_xlim(-halfSideLength, halfSideLength)
-			ax.set_ylim(-halfSideLength, halfSideLength)
-			ax.imshow(data[i].getData(), cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
-			ax.set_title("{}".format(i))
+			for a in ax:
+				a.cla()
+				a.set_xlim(-halfSideLength, halfSideLength)
+				a.set_ylim(-halfSideLength, halfSideLength)				
+			pos = log.get(i).getPose().getPosition()
+			x = pos.getX()
+			y = pos.getY()
+			xpath.append(x)
+			ypath.append(-y)
+			ax[1].plot(targetx, -targety, 'ro')
+			ax[1].plot(xpath, ypath, 'k')
+
+			ax[0].cla()
+			ax[0].set_xlim(-halfSideLength, halfSideLength)
+			ax[0].set_ylim(-halfSideLength, halfSideLength)
+			ax[0].imshow(data[i].getData(), cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+			ax[0].set_title("{}".format(i))
 			plt.pause(timestepLength)
 			
 	def playLog(self, log):

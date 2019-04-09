@@ -24,6 +24,9 @@ class SimulationManager():
 	def getAckumulatedSearch(self):
 		return self.searcher.getAckumulatedSearch()
 		
+	def getLog(self):
+		return self.searcher.getLog()
+		
 	def addObserver(self, obs):
 		pass
 	
