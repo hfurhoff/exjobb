@@ -98,3 +98,10 @@ class Vehicle():
 		
 	def setPosition(self, p):
 		self.pose = Pose(self.pose.getOrientation(), p)
+		
+	def setCourse(self, course):
+		self.desiredHeading = course
+		self.pose = Pose(course, self.getPosition())
+		
+	def getHeading(self):
+		return self.pose.getOrientation()

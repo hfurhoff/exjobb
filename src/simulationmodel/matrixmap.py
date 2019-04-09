@@ -8,6 +8,7 @@ import numpy as np
 from scipy.stats import norm
 from dto.searchareadto import SearchareaDTO
 import copy
+from simulationmodel.cell import Cell
 
 class MatrixMap(Searcharea):
 
@@ -21,42 +22,7 @@ class MatrixMap(Searcharea):
 	data = None
 	mean = 0
 	stddev = 0.5
-	
-	class Cell():
-	
-		prob = 0
-		visited = False
-		active = False
-		x = None
-		y = None
-		t = False
-	
-		def __init__(self, x, y, target):
-			self.x = x
-			self.y = y
-			self.target = target
-			tx, ty = int(target.getX()), int(target.getY())
-			self.t = x == tx and y == ty
-	
-		def getProb(self):
-			return self.prob
-			
-		def setProb(self, prob):
-			self.prob = prob
-			
-		def setActive(self):
-			self.active = True
-		
-		def visit(self):
-			self.prob *= 0.2
-			self.visited = True
-			
-		def hasBeenVisited(self):
-			return self.visited
-			
-		def hasTarget(self):
-			return self.t
-			
+				
 	def __init__(self, a):
 		self.height = int(a.getHeight())
 		self.width = int(a.getWidth())
@@ -80,24 +46,21 @@ class MatrixMap(Searcharea):
 		self.target = Point(targetx, targety)
 
 		self.cells = int((self.halfSideLength * 2) / self.gridsize) + 1
-		self.data = [None] * self.cells
+		self.data = [0] * self.cells
 		for i in range(self.cells):
-			self.data[i] = [None] * self.cells
+			self.data[i] = [0] * self.cells
 			
-		for i in range(self.cells):
+		'''		for i in range(self.cells):
 			for j in range(self.cells):
-				self.data[i][j] = self.Cell(j, i, self.target)
-				
-		print('datalen ' + repr(len(self.data)))
-		print('cells ' + repr(self.cells))
-				
+				self.data[i][j] = Cell(j - self.halfSideLength, i - self.halfSideLength, self.target)
+'''
 		for yindex in range(self.cells):
 			for xindex in range(self.cells):
 				y = yindex - self.halfSideLength
 				x = xindex - self.halfSideLength
 				if self.radiusFromCenter(x, y) <= 1:
-					self.data[yindex][xindex].setProb(norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev))
-					self.data[yindex][xindex].setActive()
+					self.data[yindex][xindex] = norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev)
+#					self.data[yindex][xindex].setActive()
 	
 	def randTarget(self):
 		ex = (self.width / 2)
@@ -120,6 +83,10 @@ class MatrixMap(Searcharea):
 		dt = log.getTimestepLength()
 		
 		for i in range(log.length() - 1):
+			'''			for ii in range(self.cells):
+				for jj in range(self.cells):
+					self.data[ii][jj].unvisit()
+'''
 			logFrom = log.get(i)
 			logTo = log.get(i + 1)
 			
@@ -139,13 +106,13 @@ class MatrixMap(Searcharea):
 			for s in range(steps + 1):
 				xPos = int(fX + (dX * s / steps)) + int(self.halfSideLength)
 				yPos = int(fY + (dY * s / steps)) + int(self.halfSideLength)
-				if not self.data[yPos][xPos].hasBeenVisited():
-					self.data[yPos][xPos].visit()
-					if self.data[yPos][xPos].hasTarget():
-						for yindex in range(self.cells):
-							for xindex in range(self.cells):
-								self.data[yindex][xindex].setProb(0)
-						self.data[yPos][xPos].setProb(1)
+#				if not self.data[yPos][xPos].hasBeenVisited():
+				self.data[yPos][xPos] *= 0.2
+				if yPos == int(self.target.getY()) and xPos == int(self.target.getX()):
+					for yindex in range(self.cells):
+						for xindex in range(self.cells):
+							self.data[yindex][xindex] = 0
+					self.data[yPos][xPos] = 1
 						
 			returnData.append(SearchareaDTO([self]))
 			
@@ -161,14 +128,15 @@ class MatrixMap(Searcharea):
 		return self.gridsize
 		
 	def getData(self):
-		data = [0] * self.cells
+		'''		data = [0] * self.cells
 		for i in range(self.cells):
 			data[i] = [0] * self.cells
 			
 		for i in range(self.cells):
 			for j in range(self.cells):
 				data[i][j] = self.data[i][j].getProb()
-		return data
+'''
+		return copy.deepcopy(self.data)
 		
 	def getHalfSideLength(self):
 		return self.halfSideLength
@@ -176,3 +144,28 @@ class MatrixMap(Searcharea):
 	def getTarget(self):
 		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
 		
+	def getAdjacentCells(self, pos):
+		x = int(pos.getX()) + int(self.cells / 2)
+		y = int(pos.getY()) + int(self.cells / 2)
+		cells = []
+		ystart = -1
+		xstart = -1
+		if y == 0:
+			ystart = 0
+		if x == 0:
+			xstart = 0
+		ystop = 2
+		xstop = 2
+		if y + ystop >= self.cells:
+			ystop = 1
+		if x + xstop >= self.cells:
+			xstop = 1
+		print('in getAdjacentCells ' + repr(x) + ' ' + repr(y) + ' datalen ' + repr(len(self.data)) + ' ' + repr(self.cells))
+		for i in range(ystart, ystop):
+			for j in range(xstart, xstop):
+				if i == 0 and j == 0:
+					pass
+				else:
+					print(repr(x + j) + ' ' + repr(y + i))
+					cells.append((self.data[y + i][x + j], x + j, y + i))
+		return cells

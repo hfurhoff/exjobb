@@ -38,7 +38,7 @@ class Searcher():
 		return sa
 		
 	def startSearch(self):
-		le = self.vehicle.latestLogEntry()
+		self.updateLatestLogEntry()
 		self.strategy.setVehicleAndArea(self.vehicle, self.area)
 		foundTarget = False
 		self.vehicle.setCourseTowards(Point(0, 0))
@@ -48,17 +48,38 @@ class Searcher():
 			foundTarget = self.strategy.foundTarget()
 		
 		if foundTarget:
-			target = self.area.getTarget()
-			self.vehicle.setPosition(target)
-			self.vehicle.updateLog()
+			self.setVehicleAtTarget()
+			return
+		i = 0
+		while not self.strategy.foundTarget() and i < 20:
+			try:
+				nextCourse = self.strategy.nextCourse(self.vehicle, self.area)
+				self.vehicle.setCourse(nextCourse)
+				self.vehicle.updatePose(1)
+				self.updateSearch()
+			except:
+				pass
+			i = i + 1
+		try:
+			self.setVehicleAtTarget()
+		except:
+			pass
 		
-		sublog = self.vehicle.logFrom(le)
+	def setVehicleAtTarget(self):
+		target = self.area.getTarget()
+		self.vehicle.setPosition(target)
+		self.vehicle.updateLog()
+		self.updateSearch()
+		
+	def updateSearch(self):
+		sublog = self.vehicle.logFrom(self.le)
 		data = self.area.updateSearchBasedOnLog(sublog)
-		#self.ackumulatedSearch.append(data[-1])
 		for sa in data:
 			self.ackumulatedSearch.append(sa)
-		if(foundTarget):
-			return 1
+		self.updateLatestLogEntry()
+		
+	def updateLatestLogEntry(self):
+		self.le = self.vehicle.latestLogEntry()
 		
 	def getAckumulatedSearch(self):
 		return self.ackumulatedSearch

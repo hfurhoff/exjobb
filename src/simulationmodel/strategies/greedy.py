@@ -2,6 +2,10 @@ from dto.course import Course
 from simulationmodel.navigationstrategy import NavigationStrategy
 from simulationmodel.vehicle import Vehicle
 from simulationmodel.searcharea import Searcharea
+from simulationmodel.matrixmap import MatrixMap
+from simulationmodel.cell import Cell
+from dto.point import Point
+import numpy as np
 
 
 class Greedy(NavigationStrategy):
@@ -10,7 +14,23 @@ class Greedy(NavigationStrategy):
 		pass
 		
 	def nextCourse(self, vehicle, area):
-		pass
+		pos = vehicle.getPosition()
+		cells = area.getAdjacentCells(pos)
+		max = cells[0]
+		print('from getAdjacentCells')
+		for cell in cells:
+			print(repr(cell[0]) + ' ' + repr(cell[1]) + ' ' + repr(cell[2]))
+			if cell[0] > max[0]:
+				max = cell
+		print('max ' + repr(max[0]) + ' ' + repr(max[1]) + ' ' + repr(max[2]))
+		
+		#print(cell.getPosition().toString())
+		dx = max[1] - pos.getX()
+		dy = max[2] - pos.getY()
+		deg = np.degrees(np.arctan2(dy, dx))
+		course = (-(deg - 90) % 360) 
+		#print(repr(course))
+		return course
 		
 	def test(self):
 		print('GreedyStrat')
