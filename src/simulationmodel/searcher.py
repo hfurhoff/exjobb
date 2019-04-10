@@ -31,7 +31,9 @@ class Searcher():
 		self.lastEntry = self.vehicle.latestLogEntry()
 		self.firstEntry = self.lastEntry
 		self.strategy.test()
-		self.ackumulatedSearch = [SearchareaDTO([self.area])]
+		dto = SearchareaDTO([self.area])
+		dto.setZeroData()
+		self.ackumulatedSearch = [dto]
 		
 	def getSearcharea(self):
 		sa = SearchareaDTO([self.area])
@@ -50,36 +52,33 @@ class Searcher():
 		if foundTarget:
 			self.setVehicleAtTarget()
 			return
+		
+		self.updateSearch(False)
 		i = 0
-		while not self.strategy.foundTarget() and i < 20:
-			try:
-				nextCourse = self.strategy.nextCourse(self.vehicle, self.area)
-				self.vehicle.setCourse(nextCourse)
-				self.vehicle.updatePose(1)
-				self.updateSearch()
-			except:
-				pass
-			i = i + 1
-		try:
-			self.setVehicleAtTarget()
-		except:
-			pass
+		while not self.strategy.foundTarget() and i < 100:
+			nextCourse = self.strategy.nextCourse(self.vehicle, self.area)
+			self.vehicle.setCourse(nextCourse)
+			self.vehicle.updatePose(1)
+			self.updateSearch(True)
+			#i = i + 1
+		
+		self.setVehicleAtTarget()
 		
 	def setVehicleAtTarget(self):
 		target = self.area.getTarget()
 		self.vehicle.setPosition(target)
 		self.vehicle.updateLog()
-		self.updateSearch()
+		self.updateSearch(True)
 		
-	def updateSearch(self):
-		sublog = self.vehicle.logFrom(self.le)
-		data = self.area.updateSearchBasedOnLog(sublog)
+	def updateSearch(self, showProb):
+		sublog = self.vehicle.logFrom(self.lastEntry)
+		data = self.area.updateSearchBasedOnLog(sublog, showProb)
 		for sa in data:
 			self.ackumulatedSearch.append(sa)
 		self.updateLatestLogEntry()
 		
 	def updateLatestLogEntry(self):
-		self.le = self.vehicle.latestLogEntry()
+		self.lastEntry = self.vehicle.latestLogEntry()
 		
 	def getAckumulatedSearch(self):
 		return self.ackumulatedSearch

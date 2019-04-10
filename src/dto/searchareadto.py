@@ -18,8 +18,8 @@ class SearchareaDTO():
 	def __init__(self, args):
 		if len(args) == 1:
 			area = copy.deepcopy(args[0])
-			self.height = int(area.getHeight())
-			self.width = int(area.getWidth())
+			self.height = int(round(area.getHeight()))
+			self.width = int(round(area.getWidth()))
 			self.gridsize = area.getGridsize()
 			self.data = area.getData()
 			self.cells = len(self.data[0])
@@ -48,3 +48,12 @@ class SearchareaDTO():
 		
 	def getTarget(self):
 		return self.target
+		
+	def setData(self, data):
+		self.data = data
+		
+	def setZeroData(self):
+		self.data = [0] * self.cells
+		for i in range(self.cells):
+			self.data[i] = [0] * self.cells
+		self.data[int(self.cells / 2)][int(self.cells / 2)] = 1

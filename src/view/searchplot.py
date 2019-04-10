@@ -47,7 +47,7 @@ class SearchPlot(Observer):
 		#print(repr(data))
 		#print(repr(range(len(data))))
 		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6, 4.8])
-		halfSideLength = int(data[0].getHalfSideLength())
+		halfSideLength = int(round(data[0].getHalfSideLength()))
 		world = [0] * len(data)
 		for c in world:
 			c = [0] * len(data)
@@ -55,7 +55,7 @@ class SearchPlot(Observer):
 		target = data[0].getTarget()
 		targetx = target.getX()
 		targety = target.getY()
-		#ax[1].set_axis_off()
+		ax[1].set_axis_off()
 		xpath = []
 		ypath = []
 		
@@ -63,7 +63,9 @@ class SearchPlot(Observer):
 			for a in ax:
 				a.cla()
 				a.set_xlim(-halfSideLength, halfSideLength)
-				a.set_ylim(-halfSideLength, halfSideLength)				
+				a.set_ylim(-halfSideLength, halfSideLength)
+			
+			ax[1].set_axis_off()
 			pos = log.get(i).getPose().getPosition()
 			x = pos.getX()
 			y = pos.getY()
@@ -75,7 +77,9 @@ class SearchPlot(Observer):
 			ax[0].cla()
 			ax[0].set_xlim(-halfSideLength, halfSideLength)
 			ax[0].set_ylim(-halfSideLength, halfSideLength)
-			ax[0].imshow(data[i].getData(), cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+			im = ax[0].imshow(data[i].getData(), cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+			if i == 0:
+				fig.colorbar(im, ax=ax[0])
 			ax[0].set_title("{}".format(i))
 			plt.pause(timestepLength)
 			

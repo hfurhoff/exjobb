@@ -16,7 +16,7 @@ class Greedy(NavigationStrategy):
 	def nextCourse(self, vehicle, area):
 		pos = vehicle.getPosition()
 		cells = area.getAdjacentCells(pos)
-		max = cells[0]
+		'''max = cells[0]
 		print('from getAdjacentCells')
 		for cell in cells:
 			print(repr(cell[0]) + ' ' + repr(cell[1]) + ' ' + repr(cell[2]))
@@ -26,7 +26,18 @@ class Greedy(NavigationStrategy):
 		
 		#print(cell.getPosition().toString())
 		dx = max[1] - pos.getX()
-		dy = max[2] - pos.getY()
+		dy = max[2] - pos.getY()'''
+		max = cells[0]
+		#print('from getAdjacentCells ' + pos.toString())
+		for cell in cells:
+			#print(repr(cell.getProb()) + ' ' + cell.getPosition().toString())
+			if cell.getProb() > max.getProb():
+				max = cell
+		#print('max ' + repr(max.getProb()) + ' ' + max.getPosition().toString())
+		
+		#print(max.getPosition().toString() + '  ' + pos.toString())
+		dx = max.getX() - pos.getX()
+		dy = max.getY() - pos.getY()
 		deg = np.degrees(np.arctan2(dy, dx))
 		course = (-(deg - 90) % 360) 
 		#print(repr(course))

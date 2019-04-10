@@ -2,14 +2,16 @@ from simulationmodel.searcher import Searcher
 from dto.settings import Settings
 from util.observer import Observer
 from dto.searchareadto import SearchareaDTO
+import os
+import re
 
 class SimulationManager():
 
 	searcher = None
 	premises = None
 
-	def __init__(self, premises):
-		self.setupSimulation(premises)
+	def __init__(self):
+		pass
 		
 	def setupSimulation(self, premises):
 		self.premises = premises
@@ -26,6 +28,15 @@ class SimulationManager():
 		
 	def getLog(self):
 		return self.searcher.getLog()
+		
+	def getStrategies(self):
+		strats = []
+		for item in sorted(os.listdir("../simulationmodel/strategies")):
+			if(re.findall("^_|.pyc$", item)):
+				pass
+			else:
+				strats.append(item)
+		return strats
 		
 	def addObserver(self, obs):
 		pass

@@ -21,11 +21,11 @@ class MatrixMap(Searcharea):
 	cells = None
 	data = None
 	mean = 0
-	stddev = 0.5
+	stddev = 0.2
 				
 	def __init__(self, a):
-		self.height = int(a.getHeight())
-		self.width = int(a.getWidth())
+		self.height = int(round(a.getHeight()))
+		self.width = int(round(a.getWidth()))
 		self.gridsize = a.getGridsize()
 		t = a.getTarget()
 		
@@ -38,14 +38,15 @@ class MatrixMap(Searcharea):
 			targety = float(t.getY())
 		except:	
 			targetx, targety = self.randTarget()
-			while self.radiusFromCenter(targetx, targety) > 1:
-				targetx, targety = self.randTarget()
+		while self.radiusFromCenter(targetx, targety) >= 1:
+			targetx, targety = self.randTarget()
 		print('Target is at ' + Point(targetx, targety).toString())
 		targetx = targetx + self.halfSideLength
 		targety = self.halfSideLength - targety
 		self.target = Point(targetx, targety)
 
-		self.cells = int((self.halfSideLength * 2) / self.gridsize) + 1
+		self.cells = int(round((self.halfSideLength * 2) / self.gridsize)) + 1
+		print('halfSideLength: ' + repr(self.halfSideLength) + ', cells: ' + repr(self.cells) + ', cells / 2: ' + repr(self.cells / 2))
 		self.data = [0] * self.cells
 		for i in range(self.cells):
 			self.data[i] = [0] * self.cells
@@ -56,8 +57,8 @@ class MatrixMap(Searcharea):
 '''
 		for yindex in range(self.cells):
 			for xindex in range(self.cells):
-				y = yindex - self.halfSideLength
-				x = xindex - self.halfSideLength
+				y = yindex - self.halfSideLength - (np.sign(yindex - self.halfSideLength) * float(self.gridsize) * 0.5)
+				x = xindex - self.halfSideLength - (np.sign(xindex - self.halfSideLength) * float(self.gridsize) * 0.5)
 				if self.radiusFromCenter(x, y) <= 1:
 					self.data[yindex][xindex] = norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev)
 #					self.data[yindex][xindex].setActive()
@@ -75,10 +76,8 @@ class MatrixMap(Searcharea):
 	def bigDia(self):
 		return max([self.height, self.width])
 		
-	def updateSearchBasedOnLog(self, log):
+	def updateSearchBasedOnLog(self, log, showProb):
 		returnData = []
-		#print(log.toString())
-		#print(repr(log.length()))
 		
 		dt = log.getTimestepLength()
 		
@@ -101,20 +100,30 @@ class MatrixMap(Searcharea):
 			dX = tX - fX
 			dY = tY - fY
 			
-			steps = 10
+			averageSpeed = (logFrom.getSpeed() + logTo.getSpeed()) / 2
 			
-			for s in range(steps + 1):
-				xPos = int(fX + (dX * s / steps)) + int(self.halfSideLength)
-				yPos = int(fY + (dY * s / steps)) + int(self.halfSideLength)
+			steps = averageSpeed / dt
+			
+			for s in range(1, steps + 1):
+				xPos = int(round(fX + (dX * s / steps)) + round(self.halfSideLength))
+				yPos = int(round(fY + (dY * s / steps)) + round(self.halfSideLength))
+				print('in updateSearchBasedOnLog, visiting (' + repr(xPos) + ', ' + repr(yPos) + ')')
 #				if not self.data[yPos][xPos].hasBeenVisited():
-				self.data[yPos][xPos] *= 0.2
-				if yPos == int(self.target.getY()) and xPos == int(self.target.getX()):
+				self.data[yPos][xPos] = 0.2 * self.data[yPos][xPos]
+				if yPos == int(round(self.target.getY())) and xPos == int(round(self.target.getX())):
 					for yindex in range(self.cells):
 						for xindex in range(self.cells):
 							self.data[yindex][xindex] = 0
 					self.data[yPos][xPos] = 1
 						
-			returnData.append(SearchareaDTO([self]))
+			dto = SearchareaDTO([self])
+			if not showProb:
+				zeroProbs = [0] * self.cells
+				for i in range(self.cells):
+					zeroProbs[i] = [0] * self.cells
+				zeroProbs[int(round(self.halfSideLength))][int(round(self.halfSideLength))] = 1
+				dto.setData(zeroProbs)
+			returnData.append(dto)
 			
 		return returnData
 		
@@ -145,8 +154,8 @@ class MatrixMap(Searcharea):
 		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
 		
 	def getAdjacentCells(self, pos):
-		x = int(pos.getX()) + int(self.cells / 2)
-		y = int(pos.getY()) + int(self.cells / 2)
+		x = int(round(pos.getX() + self.halfSideLength))
+		y = int(round(pos.getY() + self.halfSideLength))
 		cells = []
 		ystart = -1
 		xstart = -1
@@ -160,12 +169,12 @@ class MatrixMap(Searcharea):
 			ystop = 1
 		if x + xstop >= self.cells:
 			xstop = 1
-		print('in getAdjacentCells ' + repr(x) + ' ' + repr(y) + ' datalen ' + repr(len(self.data)) + ' ' + repr(self.cells))
+		#print('in getAdjacentCells ' + repr(x) + ' ' + repr(y) + ' datalen ' + repr(len(self.data)) + ' ' + repr(self.cells))
 		for i in range(ystart, ystop):
 			for j in range(xstart, xstop):
 				if i == 0 and j == 0:
 					pass
 				else:
-					print(repr(x + j) + ' ' + repr(y + i))
-					cells.append((self.data[y + i][x + j], x + j, y + i))
+					#print(repr(x + j) + ' ' + repr(y + i) + ' / ' + repr(j) + ' ' + repr(i))
+					cells.append(Cell(self.data[y + i][x + j], x + j - self.halfSideLength, y + i  - self.halfSideLength, self.target))
 		return cells

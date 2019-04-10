@@ -91,7 +91,7 @@ class Vehicle():
 		
 	def atPosition(self, p):
 		pos = self.getPosition()
-		return int(p.getX()) == int(pos.getX()) and int(p.getY()) == int(pos.getY())
+		return int(round(p.getX())) == int(round(pos.getX())) and int(round(p.getY())) == int(round(pos.getY()))
 		
 	def getTimestepLength(self):
 		return self.timestepLength

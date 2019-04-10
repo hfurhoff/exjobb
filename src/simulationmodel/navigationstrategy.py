@@ -23,7 +23,7 @@ class NavigationStrategy:
 		vp = self.vehicle.getPosition()
 		tp = self.area.getTarget()
 		#print(vp.toString() + ' ' + tp.toString())
-		found = int(vp.getX()) == int(tp.getX()) and int(vp.getY()) == int(tp.getY())
+		found = int(round(vp.getX())) == int(round(tp.getX())) and int(round(vp.getY())) == int(round(tp.getY()))
 		if(found):
 			print('found target')
 		return found

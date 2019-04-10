@@ -7,7 +7,7 @@ from dto.searchareadto import SearchareaDTO
 class Controller():
 
 	instance = None
-	simManager = None
+	simManager = SimulationManager()
 	im = None
 
 	@staticmethod
@@ -31,7 +31,7 @@ class Controller():
 		pass
 		
 	def setupSimulation(self, premises):
-		self.simManager = SimulationManager(premises)
+		self.simManager.setupSimulation(premises)
 		
 	def startSimulation(self):
 		self.simManager.startSimulation()
@@ -41,6 +41,9 @@ class Controller():
 		
 	def getLog(self):
 		return self.simManager.getLog()
+		
+	def getStrategies(self):
+		return self.simManager.getStrategies()
 	
 	def addObserver(self, obs):
 		pass

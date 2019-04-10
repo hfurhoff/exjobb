@@ -143,11 +143,8 @@ class GUI(Frame):
 		for i in range(len(self.buts)):
 			self.buts[i].grid(row = len(self.textFields) + 1, column = i)
 		
-		for item in sorted(os.listdir("../simulationmodel/strategies")):
-			if(re.findall("^_|.pyc$", item)):
-				pass
-			else:
-				self.strategySelector.insert(END, item)
+		for item in self.contr.getStrategies():
+			self.strategySelector.insert(END, item)
 
 	def __init__(self, master=None):
 		master = Tk()

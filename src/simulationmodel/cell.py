@@ -9,12 +9,12 @@ class Cell():
 	y = None
 	t = False
 
-	def __init__(self, x, y, target):
-		self.x = int(x)
-		self.y = int(y)
-		self.target = target
+	def __init__(self, prob, x, y, target):
+		self.x = x
+		self.y = y
+		self.prob = prob
 		tx, ty = int(target.getX()), int(target.getY())
-		self.t = x == tx and y == ty
+		self.t = int(x) == tx and int(y) == ty
 
 	def getProb(self):
 		return self.prob
