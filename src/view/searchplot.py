@@ -37,7 +37,8 @@ class SearchPlot(Observer):
 		ax.cla()
 		ax.set_xlim(-halfSideLength, halfSideLength)
 		ax.set_ylim(-halfSideLength, halfSideLength)
-		ax.imshow(data, cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+		im = ax.imshow(data, cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+		fig.colorbar(im, ax=ax)
 		plt.show(block=False)
 	
 	def radFromCenter(self, x, ex, y, ey):
@@ -46,7 +47,7 @@ class SearchPlot(Observer):
 	def showSimulation(self, data, log, timestepLength):
 		#print(repr(data))
 		#print(repr(range(len(data))))
-		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6, 4.8])
+		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6.5, 4.8])
 		halfSideLength = int(round(data[0].getHalfSideLength()))
 		world = [0] * len(data)
 		for c in world:
@@ -65,7 +66,7 @@ class SearchPlot(Observer):
 				a.set_xlim(-halfSideLength, halfSideLength)
 				a.set_ylim(-halfSideLength, halfSideLength)
 			
-			ax[1].set_axis_off()
+			#ax[1].set_axis_off()
 			pos = log.get(i).getPose().getPosition()
 			x = pos.getX()
 			y = pos.getY()
@@ -74,13 +75,12 @@ class SearchPlot(Observer):
 			ax[1].plot(targetx, -targety, 'ro')
 			ax[1].plot(xpath, ypath, 'k')
 
-			ax[0].cla()
-			ax[0].set_xlim(-halfSideLength, halfSideLength)
-			ax[0].set_ylim(-halfSideLength, halfSideLength)
-			im = ax[0].imshow(data[i].getData(), cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+			im = ax[0].imshow(data[i].getData(), cmap=cm.jet, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
 			if i == 0:
-				fig.colorbar(im, ax=ax[0])
-			ax[0].set_title("{}".format(i))
+				fig.colorbar(im, ax=ax[0]).set_label("Probability")
+			fig.suptitle('Timestep: ' + repr(i))
+			ax[0].set_title("Probability plot")
+			ax[1].set_title("Reality plot")
 			plt.pause(timestepLength)
 			
 	def playLog(self, log):
