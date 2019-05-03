@@ -15,9 +15,9 @@ class Vehicle():
 	currentSpeed = None #m/s
 	desiredSpeed = None
 	maxSpeed = None
-	turningRadius = None
+	turningRadius = None #degrees/second
 	log = None
-	sensor = None
+	sensorDia = None
 	timestepLength = 1 #seconds
 
 	def __init__(self, v):
@@ -27,12 +27,9 @@ class Vehicle():
 		self.currentSpeed = v.getCurrentSpeed()
 		self.maxSpeed = v.getMaxSpeed()
 		self.turningRadius = v.getTurningRadius()
-		self.sensor = v.getSensor()
+		self.sensorDia = v.getSensor()
 		self.log = Log([self])
 		
-	def getTurningRadiusBasedOnCurrentSpeed(self):
-		pass
-
 	def latestLogEntry(self):
 		return self.log.latestLogEntry()
 		
@@ -55,14 +52,25 @@ class Vehicle():
 		for i in range(numberOfTimesteps):
 			p = self.getPosition()
 			hypo = self.currentSpeed * self.timestepLength
-			course = np.radians((-self.pose.getOrientation()) + 90)
+			currentHeading = self.getHeading()
+			if currentHeading != self.desiredHeading:
+				diff = self.desiredHeading - currentHeading
+				if diff > 180:
+					diff = 360 - diff
+				if diff < -180:
+					diff = diff + 360
+				sign = diff / abs(diff)
+				if abs(diff) > self.turningRadius:
+					currentHeading = currentHeading + sign * self.turningRadius
+				else:
+					currentHeading = self.desiredHeading % 360
+			course = np.radians((-currentHeading) + 90)
 			
 			dx = hypo * np.cos(course)
 			dy = hypo * np.sin(course)
 			x, y = p.getX(), p.getY()
 			
-			self.pose = Pose(self.pose.getOrientation(), Point(x + dx, y + dy))
-			#print(self.getPosition().toString())
+			self.pose = Pose(currentHeading, Point(x + dx, y + dy))
 			self.updateLog()
 		
 	def updateLog(self):
@@ -84,7 +92,7 @@ class Vehicle():
 		return self.turningRadius
 	
 	def getSensor(self):
-		return self.sensor
+		return self.sensorDia
 	
 	def getLog(self):
 		return self.log
@@ -101,7 +109,12 @@ class Vehicle():
 		
 	def setCourse(self, course):
 		self.desiredHeading = course
-		self.pose = Pose(course, self.getPosition())
 		
 	def getHeading(self):
 		return self.pose.getOrientation()
+		
+	def near(self, pos):
+		if self.getPosition().distTo(pos) < self.currentSpeed / self.timestepLength:
+			return True
+		else:
+			return False

@@ -2,7 +2,7 @@ from dto.course import Course
 from simulationmodel.navigationstrategy import NavigationStrategy
 from simulationmodel.vehicle import Vehicle
 from simulationmodel.searcharea import Searcharea
-from simulationmodel.matrixmap import MatrixMap
+from simulationmodel.sensormap import SensorMap
 from simulationmodel.cell import Cell
 from dto.point import Point
 import numpy as np
@@ -10,38 +10,73 @@ import numpy as np
 
 class Greedy(NavigationStrategy):
 
+	target = Point(0, 0)
+
 	def __init__(self):
 		pass
 		
 	def nextCourse(self, vehicle, area):
 		pos = vehicle.getPosition()
-		cells = area.getAdjacentCells(pos)
-		'''max = cells[0]
-		print('from getAdjacentCells')
-		for cell in cells:
-			print(repr(cell[0]) + ' ' + repr(cell[1]) + ' ' + repr(cell[2]))
-			if cell[0] > max[0]:
-				max = cell
-		print('max ' + repr(max[0]) + ' ' + repr(max[1]) + ' ' + repr(max[2]))
+		margin = area.getMargin()
+		tarx = self.target.getX()
+		tary = self.target.getY()
+		posx = pos.getX()
+		posy = pos.getY()
+		correctx = posx > tarx - margin and posx < tarx + margin
+		correcty = posy > tary - margin and posy < tary + margin
+		if correctx and correcty: 
+			#get new target
+			cells = area.getAdjacentCells(pos)
+			tarpos = cells[0]
+			for cell in cells:
+				if cell.getProb() > tarpos.getProb():
+					tarpos = cell
+				self.target = tarpos.getPosition()
+		course = self.getCourseTowards(self.target)
+		return course
 		
-		#print(cell.getPosition().toString())
-		dx = max[1] - pos.getX()
-		dy = max[2] - pos.getY()'''
-		max = cells[0]
-		#print('from getAdjacentCells ' + pos.toString())
-		for cell in cells:
-			#print(repr(cell.getProb()) + ' ' + cell.getPosition().toString())
-			if cell.getProb() > max.getProb():
-				max = cell
-		#print('max ' + repr(max.getProb()) + ' ' + max.getPosition().toString())
-		
-		#print(max.getPosition().toString() + '  ' + pos.toString())
-		dx = max.getX() - pos.getX()
-		dy = max.getY() - pos.getY()
+	def getCourseTowards(self, that):
+		this = self.vehicle.getPosition()
+		dx = that.getX() - this.getX()
+		dy = that.getY() - this.getY()
 		deg = np.degrees(np.arctan2(dy, dx))
 		course = (-(deg - 90) % 360) 
-		#print(repr(course))
 		return course
+		
+	def foundTarget(self):
+		print('checking, in greedy')
+		vp = self.vehicle.getPosition()
+		if self.area.inArea(vp):
+			found = self.area.getCellForPos(vp).hasTarget()
+		else:
+			found = False
+			
+		if(found):
+			print('found target')
+		return found
+		
+	def nextPos(self, vehicle, area):
+		pos = vehicle.getPosition()
+		margin = area.getMargin()
+		tarx = self.target.getX()
+		tary = self.target.getY()
+		posx = pos.getX()
+		posy = pos.getY()
+		correctx = posx > tarx - margin and posx < tarx + margin
+		correcty = posy > tary - margin and posy < tary + margin
+		print(self.target.toString() + ' ' + pos.toString() + ' ' + repr(correctx and correcty))
+		if correctx and correcty: 
+			#get new target
+			print('get new target')
+			cells = area.getAdjacentCells(pos)
+			tarpos = cells[0]
+			for cell in cells:
+				print(cell.toString())
+				if cell.getProb() > tarpos.getProb():
+					tarpos = cell
+				self.target = tarpos.getPosition()
+		print('Target ' + self.target.toString())
+		return self.target
 		
 	def test(self):
 		print('GreedyStrat')

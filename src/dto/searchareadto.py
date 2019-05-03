@@ -57,3 +57,6 @@ class SearchareaDTO():
 		for i in range(self.cells):
 			self.data[i] = [0] * self.cells
 		self.data[int(self.cells / 2)][int(self.cells / 2)] = 1
+		
+	def setGridsize(self, gridsize):
+		self.gridsize = gridsize

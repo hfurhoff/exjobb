@@ -11,27 +11,18 @@ class Settings():
 	waypointPath = None
 	lookaheadDepth = None
 	
-	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety):
+	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety, sensor, turningRadius):
 		self.area = SearchareaDTO([height, width, gridsize, targetx, targety])
 		self.strategy = strategy
 		
 		pos = self.initialPosition(height, width, course)
 		pose = Pose(course, pos)
 		currentSpeed = maxSpeed
-		turningRadius = None
-		sensor = None
 		self.vehicle = VehicleDTO([pose, maxSpeed, currentSpeed, turningRadius, sensor])
 
 		self.waypointPath = waypointPath
 		self.lookaheadDepth = lookaheadDepth
-	'''
-	def __init__(self, vehicle, strategy, area, waypointPath, lookaheadDepth):
-		self.vehicle = vehicle
-		self.strategy = strategy
-		self.area = area
-		self.waypointPath = waypointPath
-		self.lookaheadDepth = lookaheadDepth
-	'''
+	
 	def initialPosition(self, height, width, course):
 		bigDia = max([height, width])
 		halfSideLength = 0.6 * bigDia

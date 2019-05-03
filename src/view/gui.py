@@ -3,8 +3,7 @@ from tkFileDialog import askopenfilename, asksaveasfilename
 import re
 import os
 
-from view.searchplot import SearchPlot
-from view.realityplot import RealityPlot
+from view.plot import Plot
 from view.settingselector import SettingSelector
 from contr.controller import Controller
 from dto.searchareadto import SearchareaDTO
@@ -23,6 +22,8 @@ class GUI(Frame):
 	_TARGETYINDEX = 6
 	_RUNSINDEX = 7
 	_GRIDSIZEINDEX = 8
+	_SENSORDIAMETERINDEX = 9
+	_TURNINGRADIUSINDEX = 10
 	
 	contr = Controller.getInstance()
 	
@@ -44,9 +45,11 @@ class GUI(Frame):
 					'Target X-coordinate', 
 					'Target Y-coordinate', 
 					'Number of runs',
-					'Gridsize (m)']
+					'Gridsize (m)',
+					'Sensor diameter (m)',
+					'Turningradius (degrees/second)']
 
-	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1]
+	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1, 1, 60]
 	strategy = "greedy.py"
 
 	def newFile(self):
@@ -86,10 +89,8 @@ class GUI(Frame):
 
 	def showSimulation(self):
 		self.readInputFields()
-		searchplt = SearchPlot(self.values[self._GRIDSIZEINDEX])
-		#realityplt = RealityPlot(self.values[self._GRIDSIZEINDEX])
-		searchplt.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX])
-		#realityplt.playLog(self.contr.getLog(), self.contr.getSearcharea(), self.values[self._TIMESTEPINDEX])
+		plot = Plot(self.values[self._GRIDSIZEINDEX])
+		plot.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX])
 
 	def processSearch(self):
 		self.readInputFields()
@@ -99,7 +100,18 @@ class GUI(Frame):
 		print('ready to show simulation')
 
 	def getPremises(self):
-		return Settings(self.values[self._HEIGHTINDEX], self.values[self._WIDTHINDEX], self.values[self._COURSEINDEX], self.strategy[:-3], None, None, self.values[self._GRIDSIZEINDEX], self.values[self._MAXSPEEDINDEX], self.values[self._TARGETXINDEX], self.values[self._TARGETYINDEX])
+		return Settings(	self.values[self._HEIGHTINDEX], 
+							self.values[self._WIDTHINDEX], 
+							self.values[self._COURSEINDEX], 
+							self.strategy[:-3], 
+							None, 
+							None, 
+							self.values[self._GRIDSIZEINDEX], 
+							self.values[self._MAXSPEEDINDEX], 
+							self.values[self._TARGETXINDEX], 
+							self.values[self._TARGETYINDEX], 
+							self.values[self._SENSORDIAMETERINDEX], 
+							self.values[self._TURNINGRADIUSINDEX])
 
 	def createWidgets(self, root):
 		menu = Menu(root)

@@ -1,3 +1,4 @@
+import numpy as np
 
 class Point():
 
@@ -19,3 +20,6 @@ class Point():
 		
 	def equals(self, that):
 		return self.x == that.getX() and self.y == that.getY()
+		
+	def distTo(self, that):
+		return np.sqrt(np.power(self.x - that.getX(), 2) + np.power(self.y - that.getY(), 2))

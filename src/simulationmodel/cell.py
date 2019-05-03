@@ -13,8 +13,7 @@ class Cell():
 		self.x = x
 		self.y = y
 		self.prob = prob
-		tx, ty = int(target.getX()), int(target.getY())
-		self.t = int(x) == tx and int(y) == ty
+		self.t = target
 
 	def getProb(self):
 		return self.prob
@@ -46,3 +45,6 @@ class Cell():
 		
 	def getPosition(self):
 		return Point(self.x, self.y)
+
+	def toString(self):
+		return 'Cell: ' + self.getPosition().toString() + ', ' + repr(self.getProb())

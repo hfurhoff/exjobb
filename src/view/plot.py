@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from util.observer import Observer
 from util.log import Log
 from dto.event import Event
@@ -9,16 +8,19 @@ from dto.logentry import LogEntry
 from dto.pose import Pose
 from dto.point import Point
 
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 import matplotlib.colors as colors
 from matplotlib.mlab import bivariate_normal
 from matplotlib.patches import Ellipse
 from matplotlib.transforms import Affine2D
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, ListedColormap
 from matplotlib import cm
 from scipy.stats import norm
+from matplotlib.colorbar import *
 
-class SearchPlot(Observer):
+class Plot(Observer):
 	
 	gridsize = 1
 	
@@ -48,6 +50,13 @@ class SearchPlot(Observer):
 		#print(repr(data))
 		#print(repr(range(len(data))))
 		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6.5, 4.8])
+		
+		jet = cm.jet
+		newcolors = jet(np.linspace(0, 1, 256))
+		white = np.array([1, 1, 1, 1])
+		newcolors[:1, :] = white
+		cmap = ListedColormap(newcolors)
+		
 		halfSideLength = int(round(data[0].getHalfSideLength()))
 		world = [0] * len(data)
 		for c in world:
@@ -59,7 +68,8 @@ class SearchPlot(Observer):
 		ax[1].set_axis_off()
 		xpath = []
 		ypath = []
-		
+		im = ax[0].imshow(data[0].getData(), cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+		cbar = fig.colorbar(im, ax=ax[0], label="Probability")
 		for i in range(len(data)):
 			for a in ax:
 				a.cla()
@@ -75,9 +85,18 @@ class SearchPlot(Observer):
 			ax[1].plot(targetx, -targety, 'ro')
 			ax[1].plot(xpath, ypath, 'k')
 
-			im = ax[0].imshow(data[i].getData(), cmap=cm.jet, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
-			if i == 0:
-				fig.colorbar(im, ax=ax[0]).set_label("Probability")
+			d = data[i].getData()
+			
+			max = 0
+			for k in d:
+				for l in k:
+					if max < l:
+						max = l
+			
+			cbar.remove()
+			im = ax[0].imshow(d, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength), vmin=0, vmax=max)
+			cbar = fig.colorbar(im, ax=ax[0], label="Probability")
+			
 			fig.suptitle('Timestep: ' + repr(i))
 			ax[0].set_title("Probability plot")
 			ax[1].set_title("Reality plot")

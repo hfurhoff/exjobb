@@ -1,11 +1,13 @@
 from util.observer import Observer
 from dto.settings import Settings
 from simulationmodel.navigationstrategy import NavigationStrategy
+from simulationmodel.strategies.greedy import Greedy
 from simulationmodel.searcharea import Searcharea 
 from simulationmodel.vehicle import Vehicle
 from dto.event import Event
 from dto.searchareadto import SearchareaDTO
 from simulationmodel.matrixmap import MatrixMap
+from simulationmodel.sensormap import SensorMap
 from dto.point import Point
 
 from pydoc import locate
@@ -26,7 +28,11 @@ class Searcher():
 		mod = __import__('simulationmodel.strategies.' + str, fromlist=[classname])
 		klass = getattr(mod, classname)
 		self.strategy = klass()
-		self.area = MatrixMap(area)
+		if isinstance(self.strategy, Greedy):
+			area.setGridsize(vehicle.getSensor())
+			self.area = SensorMap(area)
+		else:
+			self.area = MatrixMap(area)
 		self.vehicle = Vehicle(vehicle)
 		self.lastEntry = self.vehicle.latestLogEntry()
 		self.firstEntry = self.lastEntry
@@ -43,23 +49,40 @@ class Searcher():
 		self.updateLatestLogEntry()
 		self.strategy.setVehicleAndArea(self.vehicle, self.area)
 		foundTarget = False
-		self.vehicle.setCourseTowards(Point(0, 0))
+		nextPos = Point(0, 0)
+		self.vehicle.setCourseTowards(nextPos)
 		print(self.vehicle.getPosition().toString())
-		while (not self.vehicle.atPosition(Point(0, 0))) and (not foundTarget):
+		while not self.vehicle.atPosition(nextPos):
 			self.vehicle.updatePose(1)
 			foundTarget = self.strategy.foundTarget()
+			if foundTarget:
+				break
 		
 		if foundTarget:
 			self.setVehicleAtTarget()
 			return
 		
-		self.updateSearch(False)
+		showProb = False
+		self.updateSearch(showProb)
+		showProb = True
 		i = 0
-		while not self.strategy.foundTarget() and i < 100:
-			nextCourse = self.strategy.nextCourse(self.vehicle, self.area)
-			self.vehicle.setCourse(nextCourse)
-			self.vehicle.updatePose(1)
-			self.updateSearch(True)
+		while not foundTarget and i < 200:
+			print(repr(i))
+			tmpPos = self.strategy.nextPos(self.vehicle, self.area)
+			course = self.strategy.getCourseTowards(tmpPos)
+			print(tmpPos.toString())
+			if not tmpPos.equals(nextPos):
+				foundTarget = self.strategy.foundTarget()
+				self.updateSearch(showProb)
+				nextPos = tmpPos
+			elif self.vehicle.near(tmpPos):
+				self.vehicle.setPosition(tmpPos)
+				self.vehicle.updateLog()
+				self.updateSearch(showProb)
+				foundTarget = self.strategy.foundTarget()
+			else:
+				self.vehicle.setCourse(course)
+				self.vehicle.updatePose(1)
 			#i = i + 1
 		
 		self.setVehicleAtTarget()
