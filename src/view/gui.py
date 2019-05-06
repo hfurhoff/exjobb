@@ -24,6 +24,7 @@ class GUI(Frame):
 	_GRIDSIZEINDEX = 8
 	_SENSORDIAMETERINDEX = 9
 	_TURNINGRADIUSINDEX = 10
+	_SPEEDUPINDEX = 11
 	
 	contr = Controller.getInstance()
 	
@@ -47,10 +48,12 @@ class GUI(Frame):
 					'Number of runs',
 					'Gridsize (m)',
 					'Sensor diameter (m)',
-					'Turningradius (degrees/second)']
+					'Turningradius (degrees/second)',
+					'Speed up simulation']
 
-	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1, 1, 60]
+	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1, 1, 25, 'false']
 	strategy = "greedy.py"
+	speedUp = False
 
 	def newFile(self):
 		print "New File!"
@@ -78,6 +81,10 @@ class GUI(Frame):
 				self.values[i] = self.entries[i].get()
 			
 		self.strategy = self.strategySelector.get(ACTIVE)
+		if self.values[self._SPEEDUPINDEX] == 'true':
+			self.speedUp = True
+		else:
+			self.speedUp = False
 	
 	def showSearcharea(self):
 		self.readInputFields()
@@ -90,7 +97,7 @@ class GUI(Frame):
 	def showSimulation(self):
 		self.readInputFields()
 		plot = Plot(self.values[self._GRIDSIZEINDEX])
-		plot.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX])
+		plot.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX], self.speedUp)
 
 	def processSearch(self):
 		self.readInputFields()

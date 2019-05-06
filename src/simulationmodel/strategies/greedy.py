@@ -16,7 +16,7 @@ class Greedy(NavigationStrategy):
 		pass
 		
 	def nextCourse(self, vehicle, area):
-		pos = vehicle.getPosition()
+		'''pos = vehicle.getPosition()
 		margin = area.getMargin()
 		tarx = self.target.getX()
 		tary = self.target.getY()
@@ -32,15 +32,9 @@ class Greedy(NavigationStrategy):
 				if cell.getProb() > tarpos.getProb():
 					tarpos = cell
 				self.target = tarpos.getPosition()
-		course = self.getCourseTowards(self.target)
-		return course
-		
-	def getCourseTowards(self, that):
-		this = self.vehicle.getPosition()
-		dx = that.getX() - this.getX()
-		dy = that.getY() - this.getY()
-		deg = np.degrees(np.arctan2(dy, dx))
-		course = (-(deg - 90) % 360) 
+		course = self.getCourseTowards(self.target)'''
+		nextPos = self.nextPos(vehicle, area)
+		course = self.getCourseTowards(nextPos)
 		return course
 		
 	def foundTarget(self):

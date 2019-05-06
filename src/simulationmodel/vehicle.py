@@ -16,18 +16,23 @@ class Vehicle():
 	desiredSpeed = None
 	maxSpeed = None
 	turningRadius = None #degrees/second
+	acceleration = None #m/s2
 	log = None
-	sensorDia = None
+	sensor = None
 	timestepLength = 1 #seconds
+	initialPosition = None
 
 	def __init__(self, v):
 		from dto.vehicledto import VehicleDTO
 		self.pose = v.getPose()
+		self.initialPosition = self.getPosition()
 		self.desiredHeading = self.pose.getOrientation()
 		self.currentSpeed = v.getCurrentSpeed()
+		self.desiredSpeed = self.currentSpeed
 		self.maxSpeed = v.getMaxSpeed()
 		self.turningRadius = v.getTurningRadius()
-		self.sensorDia = v.getSensor()
+		self.acceleration = self.maxSpeed / 2.0
+		self.sensor = v.getSensor()
 		self.log = Log([self])
 		
 	def latestLogEntry(self):
@@ -38,6 +43,10 @@ class Vehicle():
 		
 	def logFrom(self, le):
 		return self.log.getLogSince(le)
+		
+	def setInitialCourse(self, course):
+		self.desiredHeading = course
+		self.pose = Pose(course, self.getPosition())
 		
 	def setCourseTowards(self, that):
 		this = self.getPosition()
@@ -51,26 +60,36 @@ class Vehicle():
 	def updatePose(self, numberOfTimesteps):
 		for i in range(numberOfTimesteps):
 			p = self.getPosition()
-			hypo = self.currentSpeed * self.timestepLength
 			currentHeading = self.getHeading()
 			if currentHeading != self.desiredHeading:
 				diff = self.desiredHeading - currentHeading
-				if diff > 180:
-					diff = 360 - diff
-				if diff < -180:
-					diff = diff + 360
+				sign = diff / abs(diff)
+				if abs(diff) > 180:
+					if sign < 0:
+						diff = diff + 360
+					else:
+						diff = diff - 360
 				sign = diff / abs(diff)
 				if abs(diff) > self.turningRadius:
 					currentHeading = currentHeading + sign * self.turningRadius
 				else:
 					currentHeading = self.desiredHeading % 360
-			course = np.radians((-currentHeading) + 90)
+					
+			if self.currentSpeed != self.desiredSpeed:
+				diff = self.desiredSpeed - self.currentSpeed
+				if abs(diff) > self.acceleration:
+					sign = diff / abs(diff)
+					self.currentSpeed = self.currentSpeed + sign * self.acceleration
+				else:
+					self.currentSpeed = self.desiredSpeed
 			
+			course = np.radians((-currentHeading) + 90)
+			hypo = self.currentSpeed * self.timestepLength
 			dx = hypo * np.cos(course)
 			dy = hypo * np.sin(course)
 			x, y = p.getX(), p.getY()
 			
-			self.pose = Pose(currentHeading, Point(x + dx, y + dy))
+			self.pose = Pose(currentHeading % 360, Point(x + dx, y + dy))
 			self.updateLog()
 		
 	def updateLog(self):
@@ -92,7 +111,7 @@ class Vehicle():
 		return self.turningRadius
 	
 	def getSensor(self):
-		return self.sensorDia
+		return self.sensor
 	
 	def getLog(self):
 		return self.log
@@ -113,8 +132,20 @@ class Vehicle():
 	def getHeading(self):
 		return self.pose.getOrientation()
 		
+	def setDesiredSpeed(self, speed):
+		if speed > self.maxSpeed:
+			self.desiredSpeed = self.maxSpeed
+		elif speed < 0:
+			self.desiredSpeed = 0
+		else:
+			self.desiredSpeed = speed
+		
 	def near(self, pos):
 		if self.getPosition().distTo(pos) < self.currentSpeed / self.timestepLength:
 			return True
 		else:
 			return False
+			
+	def getInitialPosition(self):
+		return self.initialPosition
+		

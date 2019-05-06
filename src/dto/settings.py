@@ -3,6 +3,7 @@ from dto.searchareadto import SearchareaDTO
 from dto.vehicledto import VehicleDTO
 from dto.point import Point
 from simulationmodel.navigationstrategy import NavigationStrategy
+from dto.sensor import Sensor
 
 class Settings():
 	vehicle = None
@@ -11,14 +12,14 @@ class Settings():
 	waypointPath = None
 	lookaheadDepth = None
 	
-	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety, sensor, turningRadius):
+	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety, sensorDiameter, turningRadius):
 		self.area = SearchareaDTO([height, width, gridsize, targetx, targety])
 		self.strategy = strategy
 		
 		pos = self.initialPosition(height, width, course)
 		pose = Pose(course, pos)
 		currentSpeed = maxSpeed
-		self.vehicle = VehicleDTO([pose, maxSpeed, currentSpeed, turningRadius, sensor])
+		self.vehicle = VehicleDTO([pose, maxSpeed, currentSpeed, turningRadius, Sensor(sensorDiameter)])
 
 		self.waypointPath = waypointPath
 		self.lookaheadDepth = lookaheadDepth

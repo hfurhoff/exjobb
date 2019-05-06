@@ -11,18 +11,7 @@ import copy
 from simulationmodel.cell import Cell
 
 class MatrixMap(Searcharea):
-
-	height = None
-	width = None
-	target = None
-	sampledSpace = None
-	gridsize = None
-	halfSideLength = None
-	cells = None
-	data = None
-	mean = 0
-	stddev = 0.2
-				
+			
 	def __init__(self, a):
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
@@ -46,135 +35,100 @@ class MatrixMap(Searcharea):
 		self.target = Point(targetx, targety)
 
 		self.cells = int(round((self.halfSideLength * 2) / self.gridsize)) + 1
-		print('halfSideLength: ' + repr(self.halfSideLength) + ', cells: ' + repr(self.cells) + ', cells / 2: ' + repr(self.cells / 2))
+		self.middle = int(round(self.halfSideLength / self.gridsize))
 		self.data = [0] * self.cells
 		for i in range(self.cells):
 			self.data[i] = [0] * self.cells
 			
-		'''		for i in range(self.cells):
-			for j in range(self.cells):
-				self.data[i][j] = Cell(j - self.halfSideLength, i - self.halfSideLength, self.target)
-'''
 		for yindex in range(self.cells):
+			dy = yindex * self.gridsize
 			for xindex in range(self.cells):
-				y = yindex - self.halfSideLength - (np.sign(yindex - self.halfSideLength) * float(self.gridsize) * 0.5)
-				x = xindex - self.halfSideLength - (np.sign(xindex - self.halfSideLength) * float(self.gridsize) * 0.5)
+				dx = xindex * self.gridsize
+				y = dy - self.halfSideLength - (np.sign(dy - self.halfSideLength) * float(self.gridsize) * 0.5)
+				x = dx - self.halfSideLength - (np.sign(dx - self.halfSideLength) * float(self.gridsize) * 0.5)
 				if self.radiusFromCenter(x, y) <= 1:
-					self.data[yindex][xindex] = norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev)
-#					self.data[yindex][xindex].setActive()
-	
-	def randTarget(self):
-		ex = (self.width / 2)
-		ey = (self.height / 2)
-		x = norm.rvs(self.mean, self.stddev)*ex
-		y = norm.rvs(self.mean, self.stddev)*ey
-		return x, y
-	
-	def radiusFromCenter(self, x, y):
-		return (np.power(x, 2) / np.power((self.width / 2), 2)) + (np.power(y, 2) / np.power((self.height / 2), 2))
-	
-	def bigDia(self):
-		return max([self.height, self.width])
-		
+					self.data[yindex][xindex] = self.getDataForDist(self.radiusFromCenter(x, y))
+					
+
 	def updateSearchBasedOnLog(self, log, showProb):
 		returnData = []
-		
 		dt = log.getTimestepLength()
-		
 		for i in range(log.length() - 1):
-			'''			for ii in range(self.cells):
-				for jj in range(self.cells):
-					self.data[ii][jj].unvisit()
-'''
 			logFrom = log.get(i)
+			sensor = logFrom.getSensor()
 			logTo = log.get(i + 1)
-			
 			posFrom = logFrom.getPose().getPosition()
 			fX = posFrom.getX()
 			fY = posFrom.getY()
-			
 			posTo = logTo.getPose().getPosition()
 			tX = posTo.getX()
 			tY = posTo.getY()
-			
 			dX = tX - fX
 			dY = tY - fY
-			
 			averageSpeed = (logFrom.getSpeed() + logTo.getSpeed()) / 2
-			
-			steps = averageSpeed / dt
-			
+			steps = int(round(averageSpeed / dt))
+
 			for s in range(1, steps + 1):
-				xPos = int(round(fX + (dX * s / steps)) + round(self.halfSideLength))
-				yPos = int(round(fY + (dY * s / steps)) + round(self.halfSideLength))
-				print('in updateSearchBasedOnLog, visiting (' + repr(xPos) + ', ' + repr(yPos) + ')')
-#				if not self.data[yPos][xPos].hasBeenVisited():
-				self.data[yPos][xPos] = 0.2 * self.data[yPos][xPos]
-				if yPos == int(round(self.target.getY())) and xPos == int(round(self.target.getX())):
-					for yindex in range(self.cells):
-						for xindex in range(self.cells):
-							self.data[yindex][xindex] = 0
-					self.data[yPos][xPos] = 1
+				xPos = int(round((fX + (dX * s / steps)) + self.halfSideLength) / self.gridsize)
+				yPos = int(round((fY + (dY * s / steps)) + self.halfSideLength) / self.gridsize)
+				if xPos >= self.cells - 1 or yPos >= self.cells - 1:
+					pass
+				else:
+					self.data[yPos][xPos] = (1 - sensor.probabilityOfDetection(0)) * self.data[yPos][xPos]
+					
+					found = self.getCellForPos(posTo).hasTarget()
+					if found:
+						for yindex in range(self.cells):
+							for xindex in range(self.cells):
+								self.data[yindex][xindex] = 0
+						self.data[yPos][xPos] = 1
 						
 			dto = SearchareaDTO([self])
 			if not showProb:
 				zeroProbs = [0] * self.cells
 				for i in range(self.cells):
 					zeroProbs[i] = [0] * self.cells
-				zeroProbs[int(round(self.halfSideLength))][int(round(self.halfSideLength))] = 1
+				zeroProbs[self.middle][self.middle] = 1
 				dto.setData(zeroProbs)
 			returnData.append(dto)
 			
 		return returnData
 		
-	def getHeight(self):
-		return self.height
-		
-	def getWidth(self):
-		return self.width
-		
-	def getGridsize(self):
-		return self.gridsize
-		
-	def getData(self):
-		'''		data = [0] * self.cells
-		for i in range(self.cells):
-			data[i] = [0] * self.cells
-			
-		for i in range(self.cells):
-			for j in range(self.cells):
-				data[i][j] = self.data[i][j].getProb()
-'''
-		return copy.deepcopy(self.data)
-		
-	def getHalfSideLength(self):
-		return self.halfSideLength
-		
-	def getTarget(self):
-		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
-		
-	def getAdjacentCells(self, pos):
-		x = int(round(pos.getX() + self.halfSideLength))
-		y = int(round(pos.getY() + self.halfSideLength))
+	def getAdjacentCells(self, pos, depth):
+		x, y = self.posToCellIndex(pos)
 		cells = []
-		ystart = -1
-		xstart = -1
-		if y == 0:
-			ystart = 0
-		if x == 0:
-			xstart = 0
-		ystop = 2
-		xstop = 2
-		if y + ystop >= self.cells:
-			ystop = 1
-		if x + xstop >= self.cells:
-			xstop = 1
-		#print('in getAdjacentCells ' + repr(x) + ' ' + repr(y) + ' datalen ' + repr(len(self.data)) + ' ' + repr(self.cells))
-		for i in range(ystart, ystop):
-			for j in range(xstart, xstop):
-				if i == 0 and j == 0:
-					pass
-				else:
-					#print(repr(x + j) + ' ' + repr(y + i) + ' / ' + repr(j) + ' ' + repr(i))
-					cells.append(Cell(self.data[y + i][x + j], x + j - self.halfSideLength, y + i  - self.halfSideLength, self.target))
+		goodResult = False
+		while(not goodResult):
+			print(repr(depth))
+			cells = []
+			ystart = -depth
+			xstart = -depth
+			while y + ystart < 0:
+				ystart = ystart + 1
+			while x + xstart < 0:
+				xstart = xstart + 1
+
+			ystop = depth + 1
+			xstop = depth + 1
+			while y + ystop > self.cells:
+				ystop = ystop - 1
+			while x + xstop > self.cells:
+				xstop = xstop - 1
+
+			for i in range(ystart, ystop):
+				for j in range(xstart, xstop):
+					if i == 0 and j == 0:
+						pass
+					else:
+						if self.data[y + i][x + j] > 0:
+							goodResult = True
+						p = self.cellIndexToPos(x + j, y + i)
+						c = Cell(self.data[y + i][x + j], p.getX(), p.getY(), self.target)
+						cells.append(c)
+			depth = depth + 1
+			if depth == self.cells:
+				break
 		return cells
+		
+	def getMargin(self):
+		return self.gridsize * 0.2

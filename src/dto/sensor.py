@@ -1,10 +1,20 @@
-from dto.pdf import PDF
-from dto.geometricobject import GeometricObject
+import numpy as np
+from scipy.stats import norm
 
 class Sensor():
 
-	pdf = None
-	area = None
+	diameter = 1
+	mean = 0
+	stddev = 0.2
 	
-	def __init__(self):
-		pass
+	def __init__(self, diameter):
+		self.diameter = diameter
+		self.stddev = diameter / 10.0
+		
+	def getDiameter(self):
+		return self.diameter
+		
+	def probabilityOfDetection(self, dist):
+		if dist > self.diameter / 2:
+			return 0
+		return norm.pdf(dist, self.mean, self.stddev)

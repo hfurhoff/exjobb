@@ -46,7 +46,7 @@ class Plot(Observer):
 	def radFromCenter(self, x, ex, y, ey):
 		return (np.power(x, 2) / np.power(ex, 2)) + (np.power(y, 2) / np.power(ey, 2))
 		
-	def showSimulation(self, data, log, timestepLength):
+	def showSimulation(self, data, log, timestepLength, speedUp):
 		#print(repr(data))
 		#print(repr(range(len(data))))
 		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6.5, 4.8])
@@ -76,15 +76,11 @@ class Plot(Observer):
 				a.set_xlim(-halfSideLength, halfSideLength)
 				a.set_ylim(-halfSideLength, halfSideLength)
 			
-			#ax[1].set_axis_off()
 			pos = log.get(i).getPose().getPosition()
 			x = pos.getX()
 			y = pos.getY()
 			xpath.append(x)
 			ypath.append(-y)
-			ax[1].plot(targetx, -targety, 'ro')
-			ax[1].plot(xpath, ypath, 'k')
-
 			d = data[i].getData()
 			
 			max = 0
@@ -93,14 +89,26 @@ class Plot(Observer):
 					if max < l:
 						max = l
 			
-			cbar.remove()
-			im = ax[0].imshow(d, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength), vmin=0, vmax=max)
-			cbar = fig.colorbar(im, ax=ax[0], label="Probability")
-			
-			fig.suptitle('Timestep: ' + repr(i))
-			ax[0].set_title("Probability plot")
-			ax[1].set_title("Reality plot")
-			plt.pause(timestepLength)
+			if len(data) > 50 and speedUp:
+				if i % 10 == 0:
+					im, cbar = self.displayIm(fig, ax, im, cbar, d, cmap, halfSideLength, max, timestepLength, i, targetx, targety, xpath, ypath)
+				elif i >= len(data) - 4:
+					im, cbar = self.displayIm(fig, ax, im, cbar, d, cmap, halfSideLength, max, timestepLength, i, targetx, targety, xpath, ypath)
+			else:
+				im, cbar = self.displayIm(fig, ax, im, cbar, d, cmap, halfSideLength, max, timestepLength, i, targetx, targety, xpath, ypath)
+				
+	def displayIm(self, fig, ax, im, cbar, d, cmap, halfSideLength, max, timestepLength, i, targetx, targety, xpath, ypath):
+		cbar.remove()
+		im = ax[0].imshow(d, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength), vmin=0, vmax=max)
+		cbar = fig.colorbar(im, ax=ax[0], label="Probability")
+		ax[1].plot(targetx, -targety, 'ro')
+		ax[1].plot(xpath, ypath, 'k')
+					
+		fig.suptitle('Timestep: ' + repr(i))
+		ax[0].set_title("Probability plot")
+		ax[1].set_title("Reality plot")
+		plt.pause(timestepLength)
+		return im, cbar
 			
 	def playLog(self, log):
 		pass

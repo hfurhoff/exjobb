@@ -27,3 +27,6 @@ class LogEntry():
 	
 	def getSpeed(self):
 		return self.speed
+		
+	def getSensor(self):
+		return self.sensorUsed

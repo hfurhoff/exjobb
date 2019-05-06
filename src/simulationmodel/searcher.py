@@ -29,8 +29,7 @@ class Searcher():
 		klass = getattr(mod, classname)
 		self.strategy = klass()
 		if isinstance(self.strategy, Greedy):
-			area.setGridsize(vehicle.getSensor())
-			self.area = SensorMap(area)
+			self.area = SensorMap(area, vehicle.getSensor())
 		else:
 			self.area = MatrixMap(area)
 		self.vehicle = Vehicle(vehicle)
@@ -50,7 +49,8 @@ class Searcher():
 		self.strategy.setVehicleAndArea(self.vehicle, self.area)
 		foundTarget = False
 		nextPos = Point(0, 0)
-		self.vehicle.setCourseTowards(nextPos)
+		course = self.strategy.getCourseTowards(nextPos)
+		self.vehicle.setInitialCourse(course)
 		print(self.vehicle.getPosition().toString())
 		while not self.vehicle.atPosition(nextPos):
 			self.vehicle.updatePose(1)
@@ -58,32 +58,42 @@ class Searcher():
 			if foundTarget:
 				break
 		
+		showProb = False
+		self.updateSearch(showProb)
 		if foundTarget:
 			self.setVehicleAtTarget()
 			return
 		
-		showProb = False
-		self.updateSearch(showProb)
 		showProb = True
 		i = 0
 		while not foundTarget and i < 200:
 			print(repr(i))
-			tmpPos = self.strategy.nextPos(self.vehicle, self.area)
-			course = self.strategy.getCourseTowards(tmpPos)
-			print(tmpPos.toString())
-			if not tmpPos.equals(nextPos):
-				foundTarget = self.strategy.foundTarget()
-				self.updateSearch(showProb)
-				nextPos = tmpPos
-			elif self.vehicle.near(tmpPos):
-				self.vehicle.setPosition(tmpPos)
-				self.vehicle.updateLog()
-				self.updateSearch(showProb)
-				foundTarget = self.strategy.foundTarget()
+			if isinstance(self.strategy, Greedy):
+				tmpPos = self.strategy.nextPos(self.vehicle, self.area)
+				course = self.strategy.getCourseTowards(tmpPos)
+				print(tmpPos.toString())
+				if not tmpPos.equals(nextPos):
+					foundTarget = self.strategy.foundTarget()
+					self.updateSearch(showProb)
+					nextPos = tmpPos
+					if not foundTarget:
+						self.vehicle.updatePose(1)
+				elif isinstance(self.strategy, Greedy) and self.vehicle.near(tmpPos):
+					print('near')
+					self.vehicle.setPosition(tmpPos)
+					self.vehicle.updateLog()
+					self.updateSearch(showProb)
+					foundTarget = self.strategy.foundTarget()
+				else:
+					self.vehicle.setCourse(course)
+					self.vehicle.updatePose(1)
 			else:
+				course = self.strategy.nextCourse(self.vehicle, self.area)
 				self.vehicle.setCourse(course)
 				self.vehicle.updatePose(1)
-			#i = i + 1
+				self.updateSearch(showProb)
+				foundTarget = self.strategy.foundTarget()
+				#i = i + 1
 		
 		self.setVehicleAtTarget()
 		

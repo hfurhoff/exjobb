@@ -1,9 +1,8 @@
+from simulationmodel.searcharea import Searcharea
 from dto.pose import Pose
 from dto.point import Point
-from dto.pdf import PDF
 from dto.target import Target
 from util.log import Log
-from simulationmodel.searcharea import Searcharea
 import numpy as np
 from scipy.stats import norm
 from dto.searchareadto import SearchareaDTO
@@ -11,23 +10,11 @@ import copy
 from simulationmodel.cell import Cell
 
 class SensorMap(Searcharea):
-
-	height = None
-	width = None
-	target = None
-	sampledSpace = None
-	gridsize = None
-	halfSideLength = None
-	cells = None
-	data = None
-	mean = 0
-	stddev = 0.4
-	middle = None
-				
-	def __init__(self, a):
+			
+	def __init__(self, a, sensor):
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
-		gs = a.getGridsize()
+		gs = sensor.getDiameter()
 		self.gridsize = int(gs / np.sqrt(2))
 		if self.gridsize == 0:
 			self.gridsize = 1
@@ -62,43 +49,23 @@ class SensorMap(Searcharea):
 				y = dy - self.halfSideLength - (np.sign(dy - self.halfSideLength) * float(self.gridsize) * 0.5)
 				x = dx - self.halfSideLength - (np.sign(dx - self.halfSideLength) * float(self.gridsize) * 0.5)
 				if self.radiusFromCenter(x, y) <= 1:
-					self.data[yindex][xindex] = norm.pdf(self.radiusFromCenter(x, y), self.mean, self.stddev)
+					self.data[yindex][xindex] = self.getDataForDist(self.radiusFromCenter(x, y))
 	
-	def randTarget(self):
-		ex = (self.width / 2)
-		ey = (self.height / 2)
-		x = norm.rvs(self.mean, self.stddev)*ex
-		y = norm.rvs(self.mean, self.stddev)*ey
-		return x, y
-	
-	def radiusFromCenter(self, x, y):
-		return (np.power(x, 2) / np.power((self.width / 2), 2)) + (np.power(y, 2) / np.power((self.height / 2), 2))
-	
-	def bigDia(self):
-		return max([self.height, self.width])
-		
 	def updateSearchBasedOnLog(self, log, showProb):
 		returnData = []
-		
 		dt = log.getTimestepLength()
-		
 		for i in range(log.length() - 1):
 			logFrom = log.get(i)
 			logTo = log.get(i + 1)
-			
 			posFrom = logFrom.getPose().getPosition()
 			fX = posFrom.getX()
 			fY = posFrom.getY()
-			
 			posTo = logTo.getPose().getPosition()
 			tX = posTo.getX()
 			tY = posTo.getY()
-			
 			dX = tX - fX
 			dY = tY - fY
-			
 			averageSpeed = (logFrom.getSpeed() + logTo.getSpeed()) / 2
-			
 			steps = averageSpeed / dt
 			
 			if i == log.length() - 2:
@@ -122,24 +89,6 @@ class SensorMap(Searcharea):
 			returnData.append(dto)
 			
 		return returnData
-		
-	def getHeight(self):
-		return self.height
-		
-	def getWidth(self):
-		return self.width
-		
-	def getGridsize(self):
-		return self.gridsize
-		
-	def getData(self):
-		return copy.deepcopy(self.data)
-		
-	def getHalfSideLength(self):
-		return self.halfSideLength
-		
-	def getTarget(self):
-		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
 		
 	def getAdjacentCells(self, pos):
 		x, y = self.posToCellIndex(pos)
@@ -179,46 +128,5 @@ class SensorMap(Searcharea):
 				break
 		return cells
 		
-	def cellIndexToPos(self, xindex, yindex):
-		dy = yindex * self.gridsize
-		dx = xindex * self.gridsize
-		y = dy - self.halfSideLength
-		x = dx - self.halfSideLength
-		return Point(x, y)
-
-	def posToCellIndex(self, pos):
-		x = int(round(pos.getX() + self.halfSideLength) / self.gridsize)
-		y = int(round(pos.getY() + self.halfSideLength) / self.gridsize)
-		return x, y
-
-	def getCellForPos(self, pos):
-		x, y = self.posToCellIndex(pos)
-		tx, ty = self.posToCellIndex(self.getTarget())
-		hasTarget = tx == x and ty == y
-		return Cell(self.data[y][x], x, y, hasTarget)
-		
 	def getMargin(self):
 		return self.gridsize * 0.2
-		
-	def inArea(self, pos):
-		x, y = self.posToCellIndex(pos)
-		return x >= 0 and x < self.cells and y >= 0 and y < self.cells
-		
-	def inMiddleOfCell(self, pos):
-		x, y = self.posToCellIndex(pos)
-		margin = self.getMargin()
-		posx = pos.getX()
-		posy = pos.getY()
-		correctx = posx > x - margin and posx < x + margin
-		correcty = posy > y - margin and posy < y + margin
-		return correctx and correcty
-		
-	def inMiddleOfSpecificCell(self, pos, cell):
-		margin = self.getMargin()
-		tarx = cell.getX()
-		tary = cell.getY()
-		posx = pos.getX()
-		posy = pos.getY()
-		correctx = posx > tarx - margin and posx < tarx + margin
-		correcty = posy > tary - margin and posy < tary + margin
-		return correctx and correcty
