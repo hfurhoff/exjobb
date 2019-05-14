@@ -2,7 +2,6 @@ from dto.pose import Pose
 from dto.searchareadto import SearchareaDTO
 from dto.vehicledto import VehicleDTO
 from dto.point import Point
-from simulationmodel.navigationstrategy import NavigationStrategy
 from dto.sensor import Sensor
 
 class Settings():
@@ -12,14 +11,19 @@ class Settings():
 	waypointPath = None
 	lookaheadDepth = None
 	
-	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety, sensorDiameter, turningRadius):
+	def __init__(self, height, width, course, strategy, waypointPath, lookaheadDepth, gridsize, maxSpeed, targetx, targety, sensorRad, turningRadius):
 		self.area = SearchareaDTO([height, width, gridsize, targetx, targety])
 		self.strategy = strategy
 		
 		pos = self.initialPosition(height, width, course)
 		pose = Pose(course, pos)
 		currentSpeed = maxSpeed
-		self.vehicle = VehicleDTO([pose, maxSpeed, currentSpeed, turningRadius, Sensor(sensorDiameter)])
+		sensor = None
+		if strategy == 'spiral.py':
+			sensor = Sensor(sensorRad, True)
+		else:
+			sensor = Sensor(sensorRad, False)
+		self.vehicle = VehicleDTO([pose, maxSpeed, currentSpeed, turningRadius, sensor])
 
 		self.waypointPath = waypointPath
 		self.lookaheadDepth = lookaheadDepth
@@ -56,3 +60,9 @@ class Settings():
 	
 	def getArea(self):
 		return self.area
+		
+	def getLookaheadDepth(self):
+		return self.lookaheadDepth
+		
+	def getSensor(self):
+		return self.vehicle.getSensor()

@@ -13,7 +13,7 @@ class Log():
 		self.created = time.time()
 		self.vehicle = args[0]
 		if len(args) > 1:
-			self.entries = copy.deepcopy(args[1])
+			self.entries = copy.copy(args[1])
 		else:
 			self.update(self.vehicle)
 	
@@ -23,7 +23,6 @@ class Log():
 		
 	def update(self, v):
 		self.entries.append(LogEntry(v, time.time()))
-		self.entries.sort(key=LogEntry.getTimestamp)
 
 	def latestLogEntry(self):
 		return self.entries[-1]

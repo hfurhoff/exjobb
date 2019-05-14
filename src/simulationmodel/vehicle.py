@@ -96,10 +96,11 @@ class Vehicle():
 		self.log.update(VehicleDTO([self]))
 		
 	def getPose(self):
-		return self.pose
+		return Pose(self.getHeading(), self.getPosition())
 		
 	def getPosition(self):
-		return self.pose.getPosition()
+		pos = self.pose.getPosition()
+		return Point(pos.getX(), pos.getY())
 	
 	def getMaxSpeed(self):
 		return self.maxSpeed

@@ -12,7 +12,7 @@ from simulationmodel.cell import Cell
 from dto.celldto import CellDTO
 
 
-class MatrixMap(Searcharea):
+class CoverageMap(Searcharea):
 
 	found = False
 			
@@ -49,10 +49,11 @@ class MatrixMap(Searcharea):
 				y = dy - self.halfSideLength - (np.sign(dy - self.halfSideLength) * float(self.gridsize) * 0.5)
 				x = dx - self.halfSideLength - (np.sign(dx - self.halfSideLength) * float(self.gridsize) * 0.5)
 				if self.radiusFromCenter(x, y) <= 1:
-					self.data[yindex][xindex] = self.getDataForDist(self.radiusFromCenter(x, y))
+					self.data[yindex][xindex] = 1
+		self.firstTimeZeroProb = False
 					
 	def isCoverage(self):
-		return False
+		return True
 
 	def updateSearchBasedOnLog(self, log, showProb, maxPos):
 		returnData = []
@@ -74,39 +75,26 @@ class MatrixMap(Searcharea):
 			if found:
 				maxPos = self.realTarget
 			else:
-				sensorRange = sensor.getMaxRange()
+				sensorRange = sensor.getRadius()
 				depth = int(round(sensorRange)) + 1
 				adjCells = self.getAdjacentCells(posFrom, depth)
-				self.data[yPos][xPos] = 0
-				if showProb:
-					changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
+				self.data[yPos][xPos] = 0.5
+				changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
 				for cell in adjCells:
 					cpos = cell.getPosition()
 					dist = posFrom.distTo(cpos)
 					if dist <= sensorRange:
 						x, y = self.posToCellIndex(cpos)
 						probOfDetection = sensor.probabilityOfDetection(dist)
-						self.data[y][x] = self.data[y][x] * (1.0 - probOfDetection)
-						if showProb:
-							if self.firstTimeZeroProb:
-								changes.append(self.getCellDTO(self.data[y][x], x, y))
-				if not self.firstTimeZeroProb and showProb:
-					for yy in range(self.cells):
-						for xx in range(self.cells):
-							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
-					self.firstTimeZeroProb = True
-			
-			if not showProb:
-				x, y = self.posToCellIndex(maxPos)
-				zeroProbs = [0] * self.cells
-				for i in range(self.cells):
-					zeroProbs[i] = [0] * self.cells
-				zeroProbs[y][x] = 1
-				if self.firstTimeZeroProb:
-					for i in range(self.cells):
-						for j in range(self.cells):
-							changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
-				self.firstTimeZeroProb = False
+						if probOfDetection == 1:
+							self.data[y][x] = 0.5
+						if self.firstTimeZeroProb:
+							changes.append(self.getCellDTO(self.data[y][x], x, y))
+						else:
+							for yy in range(self.cells):
+								for xx in range(self.cells):
+									changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
+						self.firstTimeZeroProb = True
 			returnData.append(changes)
 		return returnData
 		

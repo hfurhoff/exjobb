@@ -12,13 +12,16 @@ class LogEntry():
 
 	def __init__(self, v, time):
 		self.timestamp = time
-		self.pose = copy.deepcopy(v.getPose())
-		self.speed = copy.deepcopy(v.getCurrentSpeed())
-		self.sensorUsed = copy.deepcopy(v.getSensor())
+		self.pose = Pose(v.getHeading(), v.getPosition())
+		self.speed = v.getCurrentSpeed()
+		self.sensorUsed = v.getSensor()
 		
 	def getPose(self):
 		return self.pose
-		
+	
+	def getPosition(self):
+		return self.pose.getPosition()
+	
 	def toString(self):
 		return self.pose.toString()
 		

@@ -14,6 +14,7 @@ class SearchareaDTO():
 	halfSideLength = None
 	cells = None
 	data = None
+	coverage = False
 	
 	def __init__(self, args):
 		if len(args) == 1:
@@ -25,6 +26,7 @@ class SearchareaDTO():
 			self.cells = len(self.data[0])
 			self.halfSideLength = area.getHalfSideLength()
 			self.target = area.getTarget()
+			self.coverage = area.isCoverage()
 		else:
 			self.height = args[0]
 			self.width = args[1]
@@ -60,3 +62,6 @@ class SearchareaDTO():
 		
 	def setGridsize(self, gridsize):
 		self.gridsize = gridsize
+		
+	def isCoverage(self):
+		return self.coverage

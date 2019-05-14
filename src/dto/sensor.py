@@ -3,18 +3,30 @@ from scipy.stats import norm
 
 class Sensor():
 
-	diameter = 1
+	radius = 1
 	mean = 0
-	stddev = 0.2
+	coverage = False
 	
-	def __init__(self, diameter):
-		self.diameter = diameter
-		self.stddev = diameter / 10.0
+	def __init__(self, radius, coverage):
+		self.radius = radius
+		self.stddev = radius
+		self.coverage = coverage
 		
 	def getDiameter(self):
-		return self.diameter
+		return self.radius * 2.0
+		
+	def getRadius(self):
+		return self.radius
 		
 	def probabilityOfDetection(self, dist):
-		if dist > self.diameter / 2:
-			return 0
-		return norm.pdf(dist, self.mean, self.stddev)
+		prob = 1
+		dist = abs(dist)
+		if dist > self.radius:
+			max = norm.pdf(self.mean, loc = self.mean, scale = self.stddev)
+			prob = norm.pdf(dist, loc = self.mean, scale = self.stddev) / (max)
+		if dist > self.getMaxRange():
+			prob = 0
+		return prob
+		
+	def getMaxRange(self):
+		return self.radius * 2.0

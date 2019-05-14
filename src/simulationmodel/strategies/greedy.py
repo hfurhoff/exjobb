@@ -10,7 +10,7 @@ import numpy as np
 
 class Greedy(NavigationStrategy):
 
-	target = Point(0, 0)
+	found = False
 
 	def __init__(self):
 		pass
@@ -38,6 +38,8 @@ class Greedy(NavigationStrategy):
 		return course
 		
 	def foundTarget(self):
+		if self.found:
+			return True
 		print('checking, in greedy')
 		vp = self.vehicle.getPosition()
 		if self.area.inArea(vp):
@@ -45,27 +47,20 @@ class Greedy(NavigationStrategy):
 		else:
 			found = False
 			
+		self.found = found
 		if(found):
 			print('found target')
 		return found
 		
 	def nextPos(self, vehicle, area):
 		pos = vehicle.getPosition()
-		margin = area.getMargin()
-		tarx = self.target.getX()
-		tary = self.target.getY()
-		posx = pos.getX()
-		posy = pos.getY()
-		correctx = posx > tarx - margin and posx < tarx + margin
-		correcty = posy > tary - margin and posy < tary + margin
-		print(self.target.toString() + ' ' + pos.toString() + ' ' + repr(correctx and correcty))
-		if correctx and correcty: 
+		if self.atPosition(vehicle, area, self.target): 
 			#get new target
 			print('get new target')
 			cells = area.getAdjacentCells(pos)
 			tarpos = cells[0]
 			for cell in cells:
-				print(cell.toString())
+				#print(cell.toString())
 				if cell.getProb() > tarpos.getProb():
 					tarpos = cell
 				self.target = tarpos.getPosition()

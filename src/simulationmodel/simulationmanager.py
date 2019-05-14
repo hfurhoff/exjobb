@@ -11,11 +11,12 @@ class SimulationManager():
 	premises = None
 
 	def __init__(self):
-		pass
+		self.searcher = None
+		self.premises = None
 		
 	def setupSimulation(self, premises):
 		self.premises = premises
-		self.searcher = Searcher(premises.getStrategy(), premises.getArea(), premises.getVehicle())
+		self.searcher = Searcher(premises.getStrategy(), premises.getArea(), premises.getVehicle(), premises.getLookaheadDepth())
 		
 	def getSearcharea(self):
 		return self.searcher.getSearcharea()

@@ -15,7 +15,7 @@ class VehicleDTO():
 	def __init__(self, args):
 		if len(args) == 1:
 			from simulationmodel.vehicle import Vehicle
-			v = copy.deepcopy(args[0])
+			v = args[0]
 			self.pose = v.getPose()
 			self.currentSpeed = v.getCurrentSpeed()
 			self.maxSpeed = v.getMaxSpeed()
@@ -42,3 +42,9 @@ class VehicleDTO():
 	
 	def getSensor(self):
 		return self.sensor
+
+	def getHeading(self):
+		return self.pose.getOrientation()
+		
+	def getPosition(self):
+		return self.pose.getPosition()

@@ -8,7 +8,6 @@ class Controller():
 
 	instance = None
 	simManager = SimulationManager()
-	im = None
 
 	@staticmethod
 	def getInstance():
@@ -31,10 +30,19 @@ class Controller():
 		pass
 		
 	def setupSimulation(self, premises):
+		self.simManager = None
+		self.simManager = SimulationManager()
 		self.simManager.setupSimulation(premises)
 		
 	def startSimulation(self):
 		self.simManager.startSimulation()
+		
+	def simulate(self, premises):
+		self.simManager = SimulationManager()
+		self.simManager.setupSimulation(premises)
+		print('simulation set up')
+		self.simManager.startSimulation()
+		print('ready to show simulation')
 		
 	def getAckumulatedSearch(self):
 		return self.simManager.getAckumulatedSearch()

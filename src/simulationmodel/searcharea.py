@@ -9,6 +9,7 @@ from scipy.stats import norm
 from dto.searchareadto import SearchareaDTO
 import copy
 from simulationmodel.cell import Cell
+from dto.celldto import CellDTO
 
 
 class Searcharea:
@@ -17,6 +18,7 @@ class Searcharea:
 	height = None
 	width = None
 	target = None
+	realTarget = None
 	sampledSpace = None
 	gridsize = None
 	halfSideLength = None
@@ -25,9 +27,14 @@ class Searcharea:
 	mean = 0
 	stddev = 0.4
 	middle = None
+	firstTimeZeroProb = True
 		
 	@abstractmethod
 	def updateSearchBasedOnLog(self, log):
+		pass
+
+	@abstractmethod
+	def isCoverage(self):
 		pass
 		
 	def randTarget(self):
@@ -46,6 +53,11 @@ class Searcharea:
 	def inArea(self, pos):
 		x, y = self.posToCellIndex(pos)
 		return x >= 0 and x < self.cells and y >= 0 and y < self.cells
+		
+	def inSearchArea(self, pos):
+		x = pos.getX()
+		y = pos.getY()
+		return self.radiusFromCenter(x, y) <= 1
 		
 	def inMiddleOfCell(self, pos):
 		x, y = self.posToCellIndex(pos)
@@ -77,7 +89,12 @@ class Searcharea:
 		x = int(round(pos.getX() + self.halfSideLength) / self.gridsize)
 		y = int(round(pos.getY() + self.halfSideLength) / self.gridsize)
 		return x, y
-
+		
+	def cellToCellIndex(self, cell):
+		x = int(round(cell.getX() + self.halfSideLength) / self.gridsize)
+		y = int(round(cell.getY() + self.halfSideLength) / self.gridsize)
+		return x, y
+		
 	def getCellForPos(self, pos):
 		x, y = self.posToCellIndex(pos)
 		tx, ty = self.posToCellIndex(self.getTarget())
@@ -100,7 +117,20 @@ class Searcharea:
 		return self.halfSideLength
 		
 	def getTarget(self):
-		return Point(self.target.getX() - self.halfSideLength, self.target.getY() - self.halfSideLength)
+		return self.realTarget
 		
 	def getDataForDist(self, dist):
 		return norm.pdf(dist, self.mean, self.stddev) / 2.0
+		
+	def setTarget(self, targetx, targety):
+		self.realTarget = Point(targetx, -targety)
+		targetx = targetx + self.halfSideLength
+		targety = self.halfSideLength - targety
+		self.target = Point(targetx, targety)
+		
+	def getCells(self):
+		return self.cells
+		
+	def getCellDTO(self, prob, xindex, yindex):
+		pos = self.cellIndexToPos(xindex, yindex)
+		return CellDTO(prob, xindex, yindex, pos)

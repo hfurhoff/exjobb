@@ -8,6 +8,7 @@ from scipy.stats import norm
 from dto.searchareadto import SearchareaDTO
 import copy
 from simulationmodel.cell import Cell
+from dto.celldto import CellDTO
 
 class SensorMap(Searcharea):
 			
@@ -15,7 +16,7 @@ class SensorMap(Searcharea):
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
 		gs = sensor.getDiameter()
-		self.gridsize = int(gs / np.sqrt(2))
+		self.gridsize = int(round(gs / np.sqrt(2)))
 		if self.gridsize == 0:
 			self.gridsize = 1
 		t = a.getTarget()
@@ -32,10 +33,8 @@ class SensorMap(Searcharea):
 		while self.radiusFromCenter(targetx, targety) >= 1:
 			targetx, targety = self.randTarget()
 		print('Target is at ' + Point(targetx, targety).toString())
-		targetx = targetx + self.halfSideLength
-		targety = self.halfSideLength - targety
-		self.target = Point(targetx, targety)
-
+		self.setTarget(targetx, targety)
+		
 		self.cells = int(round((self.halfSideLength * 2) / self.gridsize)) + 1
 		self.middle = int(round(self.halfSideLength / self.gridsize))
 		self.data = [0] * self.cells
@@ -51,10 +50,14 @@ class SensorMap(Searcharea):
 				if self.radiusFromCenter(x, y) <= 1:
 					self.data[yindex][xindex] = self.getDataForDist(self.radiusFromCenter(x, y))
 	
-	def updateSearchBasedOnLog(self, log, showProb):
+	def isCoverage(self):
+		return False
+	
+	def updateSearchBasedOnLog(self, log, showProb, maxPos):
 		returnData = []
 		dt = log.getTimestepLength()
 		for i in range(log.length() - 1):
+			changes = []
 			logFrom = log.get(i)
 			logTo = log.get(i + 1)
 			posFrom = logFrom.getPose().getPosition()
@@ -67,37 +70,46 @@ class SensorMap(Searcharea):
 			dY = tY - fY
 			averageSpeed = (logFrom.getSpeed() + logTo.getSpeed()) / 2
 			steps = averageSpeed / dt
+			xPos = int(round((fX + dX) + self.halfSideLength) / self.gridsize)
+			yPos = int(round((fY + dY) + self.halfSideLength) / self.gridsize)
 			
 			if i == log.length() - 2:
-				xPos = int(round((fX + dX) + self.halfSideLength) / self.gridsize)
-				yPos = int(round((fY + dY) + self.halfSideLength) / self.gridsize)
 				self.data[yPos][xPos] = 0
-				found = self.getCellForPos(posTo).hasTarget()
-				if found:
-					for yindex in range(self.cells):
-						for xindex in range(self.cells):
-							self.data[yindex][xindex] = 0
-					self.data[yPos][xPos] = 1
+				if self.firstTimeZeroProb:
+					changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
+				else:
+					for yy in range(self.cells):
+						for xx in range(self.cells):
+							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
 						
-			dto = SearchareaDTO([self])
 			if not showProb:
-				zeroProbs = [0] * self.cells
-				for i in range(self.cells):
-					zeroProbs[i] = [0] * self.cells
-				zeroProbs[self.middle][self.middle] = 1
-				dto.setData(zeroProbs)
-			returnData.append(dto)
-			
+				if not i == log.length() - 2:
+					x, y = self.posToCellIndex(maxPos)
+					zeroProbs = [0] * self.cells
+					for i in range(self.cells):
+						zeroProbs[i] = [0] * self.cells
+					zeroProbs[y][x] = 1
+					if self.firstTimeZeroProb:
+						for i in range(self.cells):
+							for j in range(self.cells):
+								changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
+					self.firstTimeZeroProb = False
+				else:
+					for yy in range(self.cells):
+						for xx in range(self.cells):
+							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
+					self.firstTimeZeroProb = True
+			returnData.append(changes)
 		return returnData
 		
 	def getAdjacentCells(self, pos):
 		x, y = self.posToCellIndex(pos)
-		print('in getAdjacentCells: ' + pos.toString() + ' ' + Point(x, y).toString())
+		#print('in getAdjacentCells: ' + pos.toString() + ' ' + Point(x, y).toString())
 		cells = []
 		goodResult = False
 		depth = 1
 		while(not goodResult):
-			print(repr(depth))
+			#print(repr(depth))
 			cells = []
 			ystart = -depth
 			xstart = -depth
@@ -121,7 +133,11 @@ class SensorMap(Searcharea):
 						if self.data[y + i][x + j] > 0:
 							goodResult = True
 						p = self.cellIndexToPos(x + j, y + i)
-						c = Cell(self.data[y + i][x + j], p.getX(), p.getY(), self.target)
+						hasTarget = False
+						tpx, tpy = self.posToCellIndex(self.realTarget)
+						hasTarget = x + j == tpx
+						hasTarget = hasTarget and y + i == tpy
+						c = Cell(self.data[y + i][x + j], p.getX(), p.getY(), hasTarget)
 						cells.append(c)
 			depth = depth + 1
 			if depth == self.cells:

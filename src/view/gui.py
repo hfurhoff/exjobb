@@ -10,6 +10,7 @@ from dto.searchareadto import SearchareaDTO
 from dto.vehicledto import VehicleDTO
 from dto.pose import Pose
 from dto.settings import Settings
+import threading
 
 class GUI(Frame):
 	
@@ -24,7 +25,7 @@ class GUI(Frame):
 	_GRIDSIZEINDEX = 8
 	_SENSORDIAMETERINDEX = 9
 	_TURNINGRADIUSINDEX = 10
-	_SPEEDUPINDEX = 11
+	_LOOKAHEADINDEX = 11
 	
 	contr = Controller.getInstance()
 	
@@ -32,6 +33,9 @@ class GUI(Frame):
 	showPltBut = None
 	strategySelector = None
 	execSearchBut = None
+	finalPltBut = None
+	speedUpBut = None
+	sensorModelBut = None
 
 	statusLabel = None
 
@@ -43,17 +47,19 @@ class GUI(Frame):
 					'Initial course (degrees)', 
 					'Timestep length (s)', 
 					'Vehicle max speed (m/s)', 
-					'Target X-coordinate', 
-					'Target Y-coordinate', 
+					'Target X-coordinate (m)', 
+					'Target Y-coordinate (m)', 
 					'Number of runs',
 					'Gridsize (m)',
-					'Sensor diameter (m)',
+					'Sensor radius (m)',
 					'Turningradius (degrees/second)',
-					'Speed up simulation']
+					'Lookahead-depth (times sensor-reach)']
 
-	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1, 1, 25, 'false']
+	values = [5, 10, 30, 0.01, 1, 'n', 'n', 1, 1, 2, 25, 1]
 	strategy = "greedy.py"
-	speedUp = False
+	speedUp = None
+	threads = []
+	plot = Plot()
 
 	def newFile(self):
 		print "New File!"
@@ -81,44 +87,53 @@ class GUI(Frame):
 				self.values[i] = self.entries[i].get()
 			
 		self.strategy = self.strategySelector.get(ACTIVE)
-		if self.values[self._SPEEDUPINDEX] == 'true':
-			self.speedUp = True
-		else:
-			self.speedUp = False
 	
 	def showSearcharea(self):
 		self.readInputFields()
 		for i in range(int(self.values[self._RUNSINDEX])):
-			searchplt = SearchPlot(self.values[self._GRIDSIZEINDEX])
 			premises = self.getPremises()
 			self.contr.setupSimulation(premises)
-			searchplt.showSearcharea(self.contr.getSearcharea())
+			self.plot.showSearcharea(self.contr.getSearcharea())
 
 	def showSimulation(self):
 		self.readInputFields()
-		plot = Plot(self.values[self._GRIDSIZEINDEX])
-		plot.showSimulation(self.contr.getAckumulatedSearch(), self.contr.getLog(), self.values[self._TIMESTEPINDEX], self.speedUp)
+		search = self.contr.getAckumulatedSearch()
+		dt = self.values[self._TIMESTEPINDEX]
+		speedUp = self.speedUp.get()
+		self.plot.showSimulation(search, dt, speedUp)
 
 	def processSearch(self):
 		self.readInputFields()
 		premises = self.getPremises()
-		self.contr.setupSimulation(premises)
-		self.contr.startSimulation()
-		print('ready to show simulation')
-
+		#t = threading.Thread(target=self.contr.simulate, args=(premises,))
+		#self.threads.append(t)
+		#t.setDaemon(True)
+		#t.start()
+		self.contr.simulate(premises)
+		
+	def showSearchResult(self):
+		self.readInputFields()
+		self.plot.showSearchResult(self.contr.getSearcharea(), self.contr.getLog())
+		
 	def getPremises(self):
 		return Settings(	self.values[self._HEIGHTINDEX], 
 							self.values[self._WIDTHINDEX], 
 							self.values[self._COURSEINDEX], 
 							self.strategy[:-3], 
 							None, 
-							None, 
+							self.values[self._LOOKAHEADINDEX], 
 							self.values[self._GRIDSIZEINDEX], 
 							self.values[self._MAXSPEEDINDEX], 
 							self.values[self._TARGETXINDEX], 
 							self.values[self._TARGETYINDEX], 
 							self.values[self._SENSORDIAMETERINDEX], 
 							self.values[self._TURNINGRADIUSINDEX])
+
+	def showSensorModel(self):
+		self.readInputFields()
+		premises = self.getPremises()
+		sensor = premises.getSensor()
+		self.plot.showSensorModel(sensor)
 
 	def createWidgets(self, root):
 		menu = Menu(root)
@@ -131,10 +146,10 @@ class GUI(Frame):
 		filemenu.add_separator()
 		filemenu.add_command(label="Exit", command=root.quit)
 
-		self.showPltBut = Button(self)
-		self.showPltBut["text"] = "Show searcharea",
-		self.showPltBut["command"] = self.showSearcharea
-		self.buts.append(self.showPltBut)
+		self.sensorModelBut = Button(self)
+		self.sensorModelBut["text"] = "Show sensormodel",
+		self.sensorModelBut["command"] = self.showSensorModel
+		self.buts.append(self.sensorModelBut)
 		
 		self.execSearchBut = Button(self)
 		self.execSearchBut["text"] = "Process search",
@@ -146,6 +161,14 @@ class GUI(Frame):
 		self.startPltBut["command"] = self.showSimulation
 		self.buts.append(self.startPltBut)
 		
+		self.finalPltBut = Button(self)
+		self.finalPltBut["text"] = "Show final searcharea",
+		self.finalPltBut["command"] = self.showSearchResult
+		self.buts.append(self.finalPltBut)
+
+		self.speedUp = BooleanVar()
+		self.speedUpBut = Checkbutton(self, text = "SpeedUp", variable = self.speedUp)
+		self.buts.append(self.speedUpBut)
 		
 		for i in range(len(self.textFields)):
 			e = Entry(self)

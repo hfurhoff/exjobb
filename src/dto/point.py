@@ -23,3 +23,14 @@ class Point():
 		
 	def distTo(self, that):
 		return np.sqrt(np.power(self.x - that.getX(), 2) + np.power(self.y - that.getY(), 2))
+		
+	def rotate(self, a):
+		rad = np.deg2rad(a)
+		x1 = self.x
+		y1 = self.y
+		x = x1 * np.cos(rad) - y1 * np.sin(rad)
+		y = x1 * np.sin(rad) + y1 * np.cos(rad)
+		return Point(x, y)
+		
+	def translate(self, x, y):
+		return Point(self.x + x, self.y + y)
