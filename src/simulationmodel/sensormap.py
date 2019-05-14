@@ -16,7 +16,7 @@ class SensorMap(Searcharea):
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
 		gs = sensor.getDiameter()
-		self.gridsize = int(round(gs / np.sqrt(2)))
+		self.gridsize = int(gs / np.sqrt(2)) + 1
 		if self.gridsize == 0:
 			self.gridsize = 1
 		t = a.getTarget()
@@ -75,30 +75,26 @@ class SensorMap(Searcharea):
 			
 			if i == log.length() - 2:
 				self.data[yPos][xPos] = 0
+
+			if showProb:
 				if self.firstTimeZeroProb:
 					changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
 				else:
 					for yy in range(self.cells):
 						for xx in range(self.cells):
 							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
-						
-			if not showProb:
-				if not i == log.length() - 2:
-					x, y = self.posToCellIndex(maxPos)
-					zeroProbs = [0] * self.cells
+				self.firstTimeZeroProb = True
+			else:
+				x, y = self.posToCellIndex(maxPos)
+				zeroProbs = [0] * self.cells
+				for i in range(self.cells):
+					zeroProbs[i] = [0] * self.cells
+				zeroProbs[y][x] = 1
+				if self.firstTimeZeroProb:
 					for i in range(self.cells):
-						zeroProbs[i] = [0] * self.cells
-					zeroProbs[y][x] = 1
-					if self.firstTimeZeroProb:
-						for i in range(self.cells):
-							for j in range(self.cells):
-								changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
+						for j in range(self.cells):
+							changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
 					self.firstTimeZeroProb = False
-				else:
-					for yy in range(self.cells):
-						for xx in range(self.cells):
-							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
-					self.firstTimeZeroProb = True
 			returnData.append(changes)
 		return returnData
 		

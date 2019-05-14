@@ -85,6 +85,10 @@ class Plot(Observer):
 			y = pos.getY()
 			xpath.append(x)
 			ypath.append(-y)
+
+			change = dto.getChange(i)
+			for cell in change:
+				data[cell.getY()][cell.getX()] = cell.getProb()
 						
 			if speedUp:
 				if i % int(dto.len() / 10) == 0:
@@ -103,9 +107,6 @@ class Plot(Observer):
 			a.cla()
 			a.set_xlim(-halfSideLength, halfSideLength)
 			a.set_ylim(-halfSideLength, halfSideLength)
-		change = dto.getChange(i)
-		for cell in change:
-			data[cell.getY()][cell.getX()] = cell.getProb()
 		target = dto.getTarget()
 		sensor = log.get(0).getSensor()
 		sensorRad = sensor.getRadius()
