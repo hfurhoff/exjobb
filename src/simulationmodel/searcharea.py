@@ -120,7 +120,10 @@ class Searcharea:
 		return self.realTarget
 		
 	def getDataForDist(self, dist):
-		return norm.pdf(dist, self.mean, self.stddev) / 2.0
+		if dist > 1:
+			return 0
+		else:
+			return norm.pdf(dist, self.mean, self.stddev) / 2.0
 		
 	def setTarget(self, targetx, targety):
 		self.realTarget = Point(targetx, -targety)

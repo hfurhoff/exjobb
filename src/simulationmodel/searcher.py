@@ -1,18 +1,20 @@
 from util.observer import Observer
-from dto.settings import Settings
 from simulationmodel.navigationstrategy import NavigationStrategy
 from simulationmodel.strategies.greedy import Greedy
 from simulationmodel.strategies.spiral import Spiral
 from simulationmodel.strategies.lookahead import Lookahead
+
 from simulationmodel.searcharea import Searcharea 
+from simulationmodel.maps.coveragemap import CoverageMap
+from simulationmodel.maps.matrixmap import MatrixMap
+from simulationmodel.maps.sensormap import SensorMap
+
 from simulationmodel.vehicle import Vehicle
-from dto.event import Event
+
 from dto.searchareadto import SearchareaDTO
-from simulationmodel.matrixmap import MatrixMap
-from simulationmodel.sensormap import SensorMap
-from dto.point import Point
 from dto.searchdto import SearchDTO
-from simulationmodel.coveragemap import CoverageMap
+from dto.settings import Settings
+from dto.point import Point
 
 from pydoc import locate
 

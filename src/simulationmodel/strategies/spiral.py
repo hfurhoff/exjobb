@@ -2,7 +2,7 @@ from dto.course import Course
 from simulationmodel.navigationstrategy import NavigationStrategy
 from simulationmodel.vehicle import Vehicle
 from simulationmodel.searcharea import Searcharea
-from simulationmodel.matrixmap import MatrixMap
+from simulationmodel.maps.coveragemap import CoverageMap
 from simulationmodel.cell import Cell
 from dto.point import Point
 from dto.sensor import Sensor
