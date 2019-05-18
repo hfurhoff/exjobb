@@ -32,20 +32,23 @@ class NavigationStrategy:
 		targetDist = vp.distTo(self.area.getTarget())
 		probOfTargetDetection = sensor.probabilityOfDetection(targetDist)
 		rand = random.random_sample()
-		if probOfTargetDetection != 0:
-			print(repr(probOfTargetDetection))
+		'''if probOfTargetDetection != 0:
+			print('----------------------------------------------------------')
+			print('probabilityOfDetection: ' + repr(probOfTargetDetection))
+			print('rand: ' + repr(rand))
+			print(repr(rand < probOfTargetDetection))'''
 		if rand < probOfTargetDetection:
-			print('---------------------------------------------')
+			'''print('**********************************************')
 			print('found')
-			print('---------------------------------------------')
+			print('**********************************************')'''
 			return True
 		
 		tp = self.area.getTarget()
 		tpx, tpy = self.area.posToCellIndex(tp)
 		vpx, vpy = self.area.posToCellIndex(vp)
 		found = vpx == tpx and vpy == tpy
-		if(found):
-			print('found target')
+		'''if(found):
+			print('found target')'''
 		return found
 		
 	def setVehicleAndArea(self, vehicle, area):

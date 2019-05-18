@@ -3,6 +3,7 @@ from dto.pdf import PDF
 from dto.target import Target
 from dto.logentry import LogEntry
 from dto.point import Point
+
 import copy
 
 class SearchareaDTO():
@@ -47,6 +48,9 @@ class SearchareaDTO():
 		
 	def getHalfSideLength(self):
 		return self.halfSideLength
+		
+	def bigDia(self):
+		return max([self.height, self.width])
 		
 	def getTarget(self):
 		return self.target

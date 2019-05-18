@@ -2,7 +2,11 @@ from integration.integrationmanager import IntegrationManager
 from simulationmodel.simulationmanager import SimulationManager
 from util.observer import Observer
 from util.log import Log
+
 from dto.searchareadto import SearchareaDTO
+from dto.searchdto import SearchDTO
+
+import datetime
 
 class Controller():
 
@@ -33,15 +37,22 @@ class Controller():
 		self.simManager = None
 		self.simManager = SimulationManager()
 		self.simManager.setupSimulation(premises)
+		print('simulation set up')
 		
 	def startSimulation(self):
 		self.simManager.startSimulation()
+		print('ready to show simulation')
 		
 	def simulate(self, premises):
 		self.simManager = SimulationManager()
+		
+		before = datetime.datetime.now()
 		self.simManager.setupSimulation(premises)
-		print('simulation set up')
 		self.simManager.startSimulation()
+		after = datetime.datetime.now()
+		dto = self.getAckumulatedSearch()
+		
+		dto.addRunningTime(after - before)
 		print('ready to show simulation')
 		
 	def getAckumulatedSearch(self):

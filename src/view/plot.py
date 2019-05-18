@@ -38,11 +38,21 @@ class Plot(Observer):
 		data = dto.getData()
 		halfSideLength = dto.getHalfSideLength()
 		fig, ax = plt.subplots()
+		cmap = self.getCmap(dto.isCoverage())
 		ax.cla()
 		ax.set_xlim(-halfSideLength, halfSideLength)
 		ax.set_ylim(-halfSideLength, halfSideLength)
-		im = ax.imshow(data, cmap=cm.YlOrRd, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
-		fig.colorbar(im, ax=ax)
+		im = ax.imshow(data, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength))
+		ax.grid(b=True, which='both', axis='both')
+		gs = (2.0 * halfSideLength) / float(len(data))
+		ax.set_xticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax.set_yticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax.set_xticklabels([])
+		if dto.isCoverage():
+			cbar = fig.colorbar(im, ax=ax, label="Coverage", ticks=[0, 0.5, 1])
+			cbar.ax.set_yticklabels(['Not active', 'Visited', 'Unvisited'])
+		else:
+			cbar = fig.colorbar(im, ax=ax, label="Probability")
 		plt.show(block=False)
 
 	def showSensorModel(self, sensor):
@@ -60,7 +70,7 @@ class Plot(Observer):
 	def radFromCenter(self, x, ex, y, ey):
 		return (np.power(x, 2) / np.power(ex, 2)) + (np.power(y, 2) / np.power(ey, 2))
 		
-	def showSimulation(self, dto, timestepLength, speedUp):
+	def showSimulation(self, dto, speedUp):
 		#print(repr(data))
 		#print(repr(range(len(data))))
 		
@@ -92,16 +102,16 @@ class Plot(Observer):
 						
 			if speedUp:
 				if i % int(dto.len() / 10) == 0:
-					im, cbar = self.displayIm(fig, ax, im, cbar, dto, timestepLength, i, xpath, ypath, log, data)
+					im, cbar = self.displayIm(fig, ax, im, cbar, dto, i, xpath, ypath, log, data)
 				elif i >= dto.len() - 10:
-					im, cbar = self.displayIm(fig, ax, im, cbar, dto, timestepLength, i, xpath, ypath, log, data)
+					im, cbar = self.displayIm(fig, ax, im, cbar, dto, i, xpath, ypath, log, data)
 			else:
-				im, cbar = self.displayIm(fig, ax, im, cbar, dto, timestepLength, i, xpath, ypath, log, data)
+				im, cbar = self.displayIm(fig, ax, im, cbar, dto, i, xpath, ypath, log, data)
 		for a in ax:
 			a.cla()
 		
 				
-	def displayIm(self, fig, ax, im, cbar, dto, timestepLength, i, xpath, ypath, log, data):
+	def displayIm(self, fig, ax, im, cbar, dto, i, xpath, ypath, log, data):
 		halfSideLength = dto.getHalfSideLength()
 		for a in ax:
 			a.cla()
@@ -121,6 +131,11 @@ class Plot(Observer):
 		cmap = self.getCmap(dto.isCoverage())
 		cbar.remove()
 		im = ax[0].imshow(data, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength), vmin=0, vmax=max)
+		ax[0].grid(b=True, which='both', axis='both')
+		gs = (2.0 * halfSideLength) / float(len(data))
+		ax[0].set_xticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax[0].set_yticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax[0].set_xticklabels([])
 		ax[1].plot(targetx, -targety, 'ro')
 		ax[1].plot(xpath, ypath, 'k')
 		ellipse = Ellipse([0, 0], dto.getWidth(), dto.getHeight(), 0, fill=False, linestyle='-')
@@ -140,7 +155,7 @@ class Plot(Observer):
 			cbar = fig.colorbar(im, ax=ax[0], label="Probability")
 		
 		ax[1].set_title("Reality plot")
-		plt.pause(timestepLength)
+		plt.pause(0.01)
 		return im, cbar
 
 	def getCmap(self, coverage):
@@ -175,6 +190,11 @@ class Plot(Observer):
 				if max < l:
 					max = l
 		im = ax[0].imshow(d, cmap=cmap, extent=(-halfSideLength,halfSideLength,-halfSideLength,halfSideLength), vmin=0, vmax=max)
+		ax[0].grid(b=True, which='both', axis='both')
+		gs = (2.0 * halfSideLength) / float(len(d))
+		ax[0].set_xticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax[0].set_yticks(np.arange(-halfSideLength, halfSideLength, gs))
+		ax[0].set_xticklabels([])
 		
 		target = data.getTarget()
 		targetx = target.getX()
@@ -191,6 +211,8 @@ class Plot(Observer):
 			xpath.append(x)
 			ypath.append(-y)
 		ax[1].plot(xpath, ypath, 'k')
+		ellipse = Ellipse([0, 0], data.getWidth(), data.getHeight(), 0, fill=False, linestyle='-')
+		ax[1].add_artist(ellipse)
 		circle = plt.Circle((xpath[-1], ypath[-1]), sensorRad, color='blue')
 		ax[1].plot(targetx, -targety, 'ro')
 		ax[1].add_artist(circle)

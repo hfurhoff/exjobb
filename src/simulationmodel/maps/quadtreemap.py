@@ -6,7 +6,8 @@ from dto.pose import Pose
 from util.log import Log
 
 from simulationmodel.searcharea import Searcharea
-from simulationmodel.tree import Tree, Leaf
+from simulationmodel.maps.tree import Tree 
+from simulationmodel.maps.tree import Leaf
 from simulationmodel.cell import Cell
 
 import numpy as np
@@ -35,23 +36,91 @@ class QuadtreeMap(Searcharea):
 		while self.radiusFromCenter(targetx, targety) >= 1:
 			targetx, targety = self.randTarget()
 		print('Target is at ' + Point(targetx, targety).toString())
-		self.setTarget(targetx, targety)
+		self.setTarget(targetx, -targety)
 
 		center = Point(0, 0)
 		base = self.halfSideLength * 2.0
 		minGridsize = self.gridsize
 		area = self		
-		self.tree = Tree(center, base, minGridsize, area, None)
+		self.tree = Tree(center, base, minGridsize, area, 'root')
+		#print('tree is made')
 		self.gridsize = self.tree.getSmallestBase()
 		
 		self.cells = int(round((self.halfSideLength * 2) / self.gridsize)) + 1
 		self.middle = int(round(self.halfSideLength / self.gridsize))
+		self.data = [None] * self.cells
+		for i in range(self.cells):
+			self.data[i] = [None] * self.cells
+		
+		for yindex in range(self.cells):
+			for xindex in range(self.cells):
+				pos = self.cellIndexToPos(xindex, yindex)
+				leaf = self.tree.getLeafForPos(pos)
+				self.data[yindex][xindex] = copy.copy(leaf)
 		
 	def isCoverage(self):
 		return False
 		
 	def updateSearchBasedOnLog(self, log, showProb, maxPos):
-		pass
+		returnData = []
+		dt = log.getTimestepLength()
+		for i in range(log.length() - 1):
+			changes = []
+			logFrom = log.get(i)
+			sensor = logFrom.getSensor()
+			posFrom = logFrom.getPose().getPosition()
+			fX = posFrom.getX()
+			fY = posFrom.getY()
+			leaf = self.tree.getLeafForPos(posFrom)
+			leafPos = leaf.getPosition()
+			xPos, yPos = self.posToCellIndex(leafPos)
+			
+			logTo = log.get(i + 1)
+			posTo = logTo.getPose().getPosition()
+			found = self.getCellForPos(posTo).hasTarget()
+			found = found or self.getCellForPos(posTo).hasTarget()
+			if found:
+				maxPos = self.target
+			else:
+				sensorRange = sensor.getMaxRange()
+				depth = int(round(sensorRange)) + 1
+				adjCells = self.getAdjacentCells(leafPos, depth)
+				leaf.updateProb(0)
+				if showProb:
+					changes.append(self.getCellDTO(leaf.getProb(), xPos, yPos))
+				for cell in adjCells:
+					cpos = cell.getPosition()
+					dist = posFrom.distTo(cpos)
+					if dist <= sensorRange:
+						x, y = self.posToCellIndex(cpos)
+						probOfDetection = sensor.probabilityOfDetection(dist)
+						self.data[y][x].updateProb(self.data[y][x].getProb() * (1.0 - probOfDetection))
+						if showProb:
+							if self.firstTimeZeroProb:
+								changes.append(self.getCellDTO(self.data[y][x].getProb(), x, y))
+				if not self.firstTimeZeroProb and showProb:
+					for yy in range(self.cells):
+						for xx in range(self.cells):
+							changes.append(self.getCellDTO(self.data[yy][xx].getProb(), xx, yy))
+					self.firstTimeZeroProb = True
+			
+			if not showProb:
+				x, y = self.posToCellIndex(maxPos)
+				zeroProbs = [0] * self.cells
+				for i in range(self.cells):
+					zeroProbs[i] = [0] * self.cells
+				zeroProbs[y][x] = 1
+				if self.firstTimeZeroProb:
+					for i in range(self.cells):
+						for j in range(self.cells):
+							changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
+				self.firstTimeZeroProb = False
+			returnData.append(changes)
+		return returnData
+
+	def getCellForPos(self, pos):
+		x, y = self.posToCellIndex(pos)
+		return self.data[y][x]
 		
 	def setTarget(self, x, y):
 		self.target = Point(x, y)
@@ -66,7 +135,40 @@ class QuadtreeMap(Searcharea):
 		return self.tree.getMaxPos()
 		
 	def getData(self):
-		self.data = [0] * self.cells
+		data = [0] * self.cells
 		for i in range(self.cells):
-			self.data[i] = [0] * self.cells
-		return self.data
+			data[i] = [0] * self.cells
+			
+		for y in range(self.cells):
+			for x in range(self.cells):
+				data[y][x] = self.data[y][x].getProb()
+		return data
+		
+	def getAdjacentCells(self, pos, depth):
+		x, y = self.posToCellIndex(pos)
+		cells = []
+		ystart = -depth
+		xstart = -depth
+		while y + ystart < 0:
+			ystart = ystart + 1
+		while x + xstart < 0:
+			xstart = xstart + 1
+		ystop = depth + 1
+		xstop = depth + 1
+		while y + ystop > self.cells:
+			ystop = ystop - 1
+		while x + xstop > self.cells:
+			xstop = xstop - 1
+
+		for i in range(ystart, ystop):
+			for j in range(xstart, xstop):
+				if i == 0 and j == 0:
+					pass
+				else:
+					p = self.cellIndexToPos(x + j, y + i)
+					c = self.data[y + i][x + j]
+					cells.append(c)
+		return cells
+		
+	def getMargin(self):
+		return self.gridsize

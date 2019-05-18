@@ -16,7 +16,7 @@ class Point():
 		return self.y
 		
 	def toString(self):
-		return '(' + repr(self.x) + ', ' + repr(self.y) + ')' 
+		return '(' + repr(round(self.x, 2)) + ', ' + repr(round(self.y, 2)) + ')' 
 		
 	def equals(self, that):
 		return self.x == that.getX() and self.y == that.getY()

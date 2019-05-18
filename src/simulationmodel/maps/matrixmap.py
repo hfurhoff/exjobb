@@ -73,29 +73,29 @@ class MatrixMap(Searcharea):
 			found = found or self.getCellForPos(posTo).hasTarget()
 			if found:
 				maxPos = self.realTarget
-			else:
-				sensorRange = sensor.getMaxRange()
-				depth = int(round(sensorRange)) + 1
-				adjCells = self.getAdjacentCells(posFrom, depth)
-				self.data[yPos][xPos] = 0
-				if showProb:
-					changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
-				for cell in adjCells:
-					cpos = cell.getPosition()
-					dist = posFrom.distTo(cpos)
-					if dist <= sensorRange:
-						x, y = self.posToCellIndex(cpos)
-						probOfDetection = sensor.probabilityOfDetection(dist)
-						self.data[y][x] = self.data[y][x] * (1.0 - probOfDetection)
-						if showProb:
-							if self.firstTimeZeroProb:
-								changes.append(self.getCellDTO(self.data[y][x], x, y))
-				if not self.firstTimeZeroProb and showProb:
-					for yy in range(self.cells):
-						for xx in range(self.cells):
-							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
-					self.firstTimeZeroProb = True
-			
+
+			sensorRange = sensor.getMaxRange()
+			depth = int(round(sensorRange)) + 1
+			adjCells = self.getAdjacentCells(posFrom, depth)
+			self.data[yPos][xPos] = 0
+			if showProb:
+				changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
+			for cell in adjCells:
+				cpos = cell.getPosition()
+				dist = posFrom.distTo(cpos)
+				if dist <= sensorRange:
+					x, y = self.posToCellIndex(cpos)
+					probOfDetection = sensor.probabilityOfDetection(dist)
+					self.data[y][x] = self.data[y][x] * (1.0 - probOfDetection)
+					if showProb:
+						if self.firstTimeZeroProb:
+							changes.append(self.getCellDTO(self.data[y][x], x, y))
+			if not self.firstTimeZeroProb and showProb:
+				for yy in range(self.cells):
+					for xx in range(self.cells):
+						changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
+				self.firstTimeZeroProb = True
+		
 			if not showProb:
 				x, y = self.posToCellIndex(maxPos)
 				zeroProbs = [0] * self.cells
@@ -124,9 +124,9 @@ class MatrixMap(Searcharea):
 			xstart = xstart + 1
 		ystop = depth + 1
 		xstop = depth + 1
-		while y + ystop > self.cells:
+		while y + ystop >= self.cells:
 			ystop = ystop - 1
-		while x + xstop > self.cells:
+		while x + xstop >= self.cells:
 			xstop = xstop - 1
 
 		for i in range(ystart, ystop):

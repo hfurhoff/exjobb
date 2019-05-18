@@ -100,12 +100,12 @@ class SensorMap(Searcharea):
 		
 	def getAdjacentCells(self, pos):
 		x, y = self.posToCellIndex(pos)
-		#print('in getAdjacentCells: ' + pos.toString() + ' ' + Point(x, y).toString())
+		##print('in getAdjacentCells: ' + pos.toString() + ' ' + Point(x, y).toString())
 		cells = []
 		goodResult = False
 		depth = 1
 		while(not goodResult):
-			#print(repr(depth))
+			##print(repr(depth))
 			cells = []
 			ystart = -depth
 			xstart = -depth
@@ -136,7 +136,7 @@ class SensorMap(Searcharea):
 						c = Cell(self.data[y + i][x + j], p.getX(), p.getY(), hasTarget)
 						cells.append(c)
 			depth = depth + 1
-			if depth == self.cells:
+			if depth > self.cells:
 				break
 		return cells
 		

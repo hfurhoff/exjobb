@@ -72,30 +72,43 @@ class CoverageMap(Searcharea):
 			posTo = logTo.getPose().getPosition()
 			found = self.getCellForPos(posTo).hasTarget()
 			found = found or self.getCellForPos(posTo).hasTarget()
-			if found:
-				maxPos = self.realTarget
-			else:
-				sensorRange = sensor.getRadius()
-				depth = int(round(sensorRange)) + 1
-				adjCells = self.getAdjacentCells(posFrom, depth)
-				self.data[yPos][xPos] = 0.5
+			
+			sensorRange = sensor.getRadius()
+			depth = int(round(sensorRange)) + 1
+			adjCells = self.getAdjacentCells(posFrom, depth)
+			self.data[yPos][xPos] = 0.5
+			if showProb:
 				changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
-				for cell in adjCells:
-					cpos = cell.getPosition()
-					dist = posFrom.distTo(cpos)
-					if dist <= sensorRange:
-						x, y = self.posToCellIndex(cpos)
-						probOfDetection = sensor.probabilityOfDetection(dist)
-						if probOfDetection == 1:
-							self.data[y][x] = 0.5
+			for cell in adjCells:
+				cpos = cell.getPosition()
+				dist = posFrom.distTo(cpos)
+				if dist <= sensorRange:
+					x, y = self.posToCellIndex(cpos)
+					probOfDetection = sensor.probabilityOfDetection(dist)
+					if probOfDetection == 1:
+						self.data[y][x] = 0.5
+					if showProb:
 						if self.firstTimeZeroProb:
 							changes.append(self.getCellDTO(self.data[y][x], x, y))
 						else:
 							for yy in range(self.cells):
 								for xx in range(self.cells):
 									changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
-						self.firstTimeZeroProb = True
+							self.firstTimeZeroProb = True
+			
+			if not showProb and not found:
+				x, y = self.posToCellIndex(Point(0, 0))
+				zeroProbs = [0] * self.cells
+				for i in range(self.cells):
+					zeroProbs[i] = [0] * self.cells
+				zeroProbs[y][x] = 1
+				if self.firstTimeZeroProb:
+					for i in range(self.cells):
+						for j in range(self.cells):
+							changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
+				self.firstTimeZeroProb = False
 			returnData.append(changes)
+			
 		return returnData
 		
 	def foundTarget(self):

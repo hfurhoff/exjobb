@@ -27,14 +27,19 @@ class Lookahead(NavigationStrategy):
 		if self.atPositionWithExtraMargin(vehicle, area, self.target): 
 			#get new target
 			sensor = vehicle.getSensor()
-			d = int(self.depth * sensor.getRadius() + 1)
-			print('-------------------------------------------------------------------')
+			d = int(round(self.depth * sensor.getRadius() / area.getGridsize()) + 1)
+			#print('-------------------------------------------------------------------')
 			currentHeading = vehicle.getHeading()
 			currentCell = area.getCellForPos(pos)
 			targetCell = currentCell
-			while not targetCell.getProb() > 0.0 and d < area.getCells():
-				print('depth: ' + repr(d))
-				cells = area.getAdjacentCells(pos, d)
+			i = 1
+			cutoff = 0.1
+			#print('targetCellProb: ' + repr(float(targetCell.getProb())) + ', cutoff: ' + repr(cutoff))
+			#print(repr(float(targetCell.getProb()) < cutoff and d + i < area.getCells()))
+			while float(targetCell.getProb()) < cutoff and d + i < area.getCells():
+				'''print('targetCellProb: ' + repr(targetCell.getProb()) + ', cutoff: ' + repr(cutoff))
+				print('depth: ' + repr(d + i))'''
+				cells = area.getAdjacentCells(pos, d + i)
 				targetCell = cells[0]
 				maxValue = self.calculateValue(vehicle, targetCell)
 				for cell in cells:
@@ -43,14 +48,17 @@ class Lookahead(NavigationStrategy):
 						targetCell = cell
 						maxValue = value
 					self.target = targetCell.getPosition()
-				d += int(sensor.getRadius() + 1)
-			print('Target: ' + self.target.toString() + ', diff: ' + repr(currentHeading - self.getCourseFromTo(pos, targetCell.getPosition())))
-			print('-------------------------------------------------------------------')
+				i = i * 2
+				if d + i >= area.getCells() - 1:
+					i = 1
+					cutoff = cutoff / 2.0
+			'''print('Target: ' + self.target.toString() + ', diff: ' + repr(currentHeading - self.getCourseFromTo(pos, targetCell.getPosition())))
+			print('-------------------------------------------------------------------')'''
 		return self.target
 		
 	def atPositionWithExtraMargin(self, vehicle, area, target):
-		sensorRad = vehicle.getSensor().getRadius() * 0.6
-		margin = sensorRad
+		#sensorRad = vehicle.getSensor().getRadius() * 0.6
+		margin = area.getGridsize()#sensorRad
 		tarx = target.getX()
 		tary = target.getY()
 		pos = vehicle.getPosition()

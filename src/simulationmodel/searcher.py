@@ -5,6 +5,7 @@ from simulationmodel.strategies.spiral import Spiral
 from simulationmodel.strategies.lookahead import Lookahead
 
 from simulationmodel.searcharea import Searcharea 
+from simulationmodel.maps.quadtreemap import QuadtreeMap
 from simulationmodel.maps.coveragemap import CoverageMap
 from simulationmodel.maps.matrixmap import MatrixMap
 from simulationmodel.maps.sensormap import SensorMap
@@ -14,9 +15,11 @@ from simulationmodel.vehicle import Vehicle
 from dto.searchareadto import SearchareaDTO
 from dto.searchdto import SearchDTO
 from dto.settings import Settings
+from dto.sensor import Sensor
 from dto.point import Point
 
 from pydoc import locate
+import numpy as np
 
 class Searcher():
 
@@ -35,20 +38,30 @@ class Searcher():
 		mod = __import__('simulationmodel.strategies.' + str, fromlist=[classname])
 		klass = getattr(mod, classname)
 		self.strategy = klass()
+		sensor = vehicle.getSensor()
+		'''bigDia = area.bigDia()
+		gs = int((2 * bigDia) / 20.0) + 1
+		if gs < int(sensor.getRadius()):
+			gs = int(sensor.getRadius())
+		if gs < 1:
+			gs = 1
+		area.setGridsize(gs)'''
 		if isinstance(self.strategy, Greedy):
-			self.area = SensorMap(area, vehicle.getSensor())
+			self.area = SensorMap(area, sensor)
 		elif isinstance(self.strategy, Lookahead):
 			self.strategy.setDepth(depth)
 			self.area = MatrixMap(area)
 		elif isinstance(self.strategy, Spiral):
 			self.area = CoverageMap(area)
+		else:
+			self.area = QuadtreeMap(area)
 		self.vehicle = Vehicle(vehicle)
 		self.lastEntry = self.vehicle.latestLogEntry()
 		self.firstEntry = self.lastEntry
 		self.strategy.test()
 		dto = SearchareaDTO([self.area])
-		#dto.setZeroData()
-		self.dto = SearchDTO(dto)
+		dto.setZeroData()
+		self.dto = SearchDTO(dto, classname, sensor.getRadius())
 		self.ackumulatedSearch = [dto]
 		
 	def getSearcharea(self):
@@ -84,12 +97,13 @@ class Searcher():
 			if foundTarget:
 				break
 
-		self.updateSearch(showProb)
-		self.vehicle.updatePose(5)
-		self.vehicle.setDesiredSpeed(self.vehicle.getMaxSpeed())
 		if foundTarget:
+			self.vehicle.setDesiredSpeed(self.vehicle.getMaxSpeed())
 			self.setVehicleAtTarget()
 			return		
+
+		self.vehicle.updatePose(5)
+		self.updateSearch(showProb)
 		
 		showProb = True
 		self.dto.showProb(SearchareaDTO([self.area]))
@@ -98,7 +112,7 @@ class Searcher():
 			if isinstance(self.strategy, Greedy):
 				tmpPos = self.strategy.nextPos(self.vehicle, self.area)
 				course = self.strategy.getCourseTowards(tmpPos)
-				print(repr(i))
+				#print(repr(i))
 				if not tmpPos.equals(nextPos):
 					foundTarget = self.strategy.foundTarget()
 					self.updateSearch(showProb)
@@ -140,6 +154,7 @@ class Searcher():
 		self.vehicle.setPosition(target)
 		self.vehicle.updateLog()
 		self.updateSearch(False)
+		self.dto.setEndState(SearchareaDTO([self.area]))
 		
 	def updateSearch(self, showProb):
 		sublog = self.vehicle.logFrom(self.lastEntry)

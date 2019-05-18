@@ -1,7 +1,7 @@
 from dto.celldto import CellDTO
 from dto.point import Point
 
-from simulationmodel.maps.quadtreemap import QuadtreeMap
+#from simulationmodel.maps.quadtreemap import QuadtreeMap
 from simulationmodel.searcharea import Searcharea
 from simulationmodel.cell import Cell
 
@@ -15,91 +15,138 @@ class Tree():
 	area = None
 	parent = None
 	root = None
-	prob = 0
+	totProb = 0
 	maxProb = 0
-	children = {'topLeft'	: None,
-				'topRight'	: None,
-				'botLeft'	: None,
-				'botRight'	: None}
+	children = None
+	keys = None
+	key = None
+	maxKey = None
 	
 	
-	def __init__(self, center, base, minGridsize, area, parent):
+	def __init__(self, center, base, minGridsize, area, inputKey):
 		self.center = center
 		self.base = base
 		self.minGridsize = minGridsize
 		self.area = area
-		self.parent = parent
+		self.key = inputKey
 		self.root = area.getTree()
+		self.children = dict()
+		self.keys = [	"topLeft",
+						"topRight",
+						"botLeft",
+						"botRight"]
 		if self.inEllipse(center, base, area):
-			if base > minGridsize:
+			if base * 0.5 > minGridsize and base * 0.5 > 1:
 				diff = base * 0.25
-				for key in self.children:
+				for key in self.keys:
 					tempCenter = None
 					x = center.getX()
 					y = center.getY()
-					if key == 'topLeft':
+					if key == "topLeft":
 						x = x - diff
 						y = y + diff
-					elif key == 'topRight':
+					elif key == "topRight":
 						x = x + diff
 						y = y + diff
-					elif key == 'botLeft':
+					elif key == "botLeft":
 						x = x - diff
 						y = y - diff
-					elif key == 'botRight':
+					elif key == "botRight":
 						x = x + diff
 						y = y - diff
 					tempCenter = Point(x, y)
-					self.children[key] = Tree(tempCenter, base * 0.5, minGridsize, area, self)
-					prob = self.children[key].getProb()
+					tree = Tree(tempCenter, base * 0.5, minGridsize, area, key)
+					self.children[key] = tree
+					self.children[key].setParent(self)
+					prob = self.children[key].getMaxProb()
 					if prob > self.maxProb:
 						self.maxProb = prob
-					self.prob += prob
+						self.maxKey = key
+					self.totProb += prob
 			else:
-				self.children.clear()
+				self.keys = ["leaf"]
 				dist = self.radiusFromRootCenter(center, area)
 				prob = area.getDataForDist(dist)
-				self.prob = prob
+				self.totProb = prob
 				self.maxProb = prob
+				self.maxKey = "leaf"
 				t = area.getTarget()
-				correctx = t.getX() >= center.getX() - (base * 0.5) and t.getX() <= center.getX() + (base * 0.5)
-				correcty = t.getY() >= center.getY() - (base * 0.5) and t.getY() <= center.getY() + (base * 0.5)
-				hasTarget = correctx and correcty
-				self.children.update({'leaf': Leaf(self, Cell(prob, center.getX(), center.getY(), hasTarget))})
+				hasTarget = self.posInCell(t)
+				#hasTarget = hasTarget or pos.getX() <= self.center.getY() + (self.base * 0.5)
+				#hasTarget = hasTarget or pos.getY() <= self.center.getY() + (self.base * 0.5)
+				self.children["leaf"] = Leaf(Cell(prob, center.getX(), center.getY(), hasTarget), "leaf")
+				self.children["leaf"].setParent(self)
+				'''print('leaf created')
+				print('keys: ' + repr(self.keys))
+				print('children: ' + repr(self.children))
+				print('----------------------------------------------')'''
 		else:
-			self.children.clear()
+			self.keys = []
+
+	def setParent(self, parent):
+		self.parent = parent
+
+	def getLeafForPos(self, pos):
+		if "leaf" in self.keys:
+			return self.children["leaf"]
+		else:
+			leaf = Leaf(Cell(0, self.area.getHalfSideLength(), self.area.getHalfSideLength(), False), "outside ellipse")
+			if self.posInCell(pos):
+				for key in self.keys:
+					if self.children[key].posInCell(pos):
+						leaf = self.children[key].getLeafForPos(pos)
+			return leaf
+
+	def posInCell(self, pos):
+		correctx = pos.getX() >= self.center.getX() - (self.base * 0.5) 
+		correctx = correctx and pos.getX() < self.center.getX() + (self.base * 0.5)
+		
+		correcty = pos.getY() >= self.center.getY() - (self.base * 0.5) 
+		correcty = correcty and pos.getY() < self.center.getY() + (self.base * 0.5)
+		
+		hasPos = correctx and correcty
+		return hasPos
 
 	def getSmallestBase(self):
-		if self.parent == None:
-			return self.children['topLeft'].getSmallestBase()
+		if self.key == 'root':
+			return self.children["topLeft"].getSmallestBase()
 		elif len(self.children) == 4:
-			return self.children['botRight'].getSmallestBase()
+			return self.children["botRight"].getSmallestBase()
 		else:
 			return self.base
 			
 	def getMaxPos(self):
-		maxProb = 0
-		max = None
-		for c in self.children;
-			prob = self.children[c].getMaxProb()
-			if prob > maxProb:
-				max = self.children[c]
-		if isinstance(max, Leaf):
-			return max.getPosition()
-		elif isinstance(max, Tree):
-			return max.getMaxPos()
+		if "leaf" in self.keys:
+			return self.children["leaf"].getPosition()
 		else:
-			print('in getMaxProb, something went wrong')
-			return None
+			return self.children[self.maxKey].getMaxPos()
 
 	def getMaxProb(self):
 		return self.maxProb
-
+		
+	def getTotProb(self):
+		return self.totProb
+		
+	def updateProb(self, oldProb, newProb, childKey):
+		diff = oldProb - newProb
+		self.totProb = self.totProb - diff
+		if self.maxKey == childKey and self.maxProb == oldProb:
+			self.maxKey = childKey
+			self.maxProb = newProb
+			for key in self.keys:
+				prob = self.children[key].getMaxProb()
+				if prob > self.maxProb:
+					self.maxProb = prob
+					self.maxKey = key
+		if self.parent != None:
+			self.parent.updateProb(oldProb, newProb, self.key)
+			
 	def inEllipse(self, center, base, area):
 		inEllipse = False
 		x, y = center.getX(), center.getY()
 		diff = 0.5 * base
-		corners = [	Point(x + diff, y + diff), 
+		corners = [	center,
+					Point(x + diff, y + diff), 
 					Point(x - diff, y + diff), 
 					Point(x + diff, y - diff), 
 					Point(x - diff, y - diff)]
@@ -116,10 +163,14 @@ class Leaf():
 
 	parent = None
 	cell = None
+	key = "leaf"
 	
-	def __init__(self, parent, cell):
-		self.parent = parent
+	def __init__(self, cell, key):
 		self.cell = cell
+		self.key = key
+		
+	def setParent(self, parent):
+		self.parent = parent
 		
 	def getCell(self):
 		return self.cell
@@ -135,3 +186,13 @@ class Leaf():
 		
 	def getMaxProb(self):
 		return self.getProb()
+		
+	def hasTarget(self):
+		return self.cell.hasTarget()
+		
+	def updateProb(self, newProb):
+		oldProb = self.getProb()
+		diff = oldProb - newProb
+		self.cell.setProb(newProb)
+		if self.parent != None:
+			self.parent.updateProb(oldProb, newProb, self.key)
