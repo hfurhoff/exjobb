@@ -53,7 +53,7 @@ class Controller():
 		dto = self.getAckumulatedSearch()
 		
 		dto.addRunningTime(after - before)
-		print('ready to show simulation')
+		print('simulation done')
 		
 	def getAckumulatedSearch(self):
 		return self.simManager.getAckumulatedSearch()

@@ -1,0 +1,46 @@
+*************************************************************************
+STARTED: 	2019-05-19 11:21:38.999000
+FINISHED:	2019-05-19 12:29:50.190000
+PARAMETERS: 
+Searcharea height (m) : 500.0	Searcharea width (m) : 500.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 200.0	Gridsize (m) : 25.0
+Sensor radius (m) : 50.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 130.23408759711353
+RUNS PROCESSED: 50
+HEIGHTxWIDTH: 500x500
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+grdy		|1834.18	|0.75212			|71			|
+load		|554.56		|37.37044			|25.0		|
+quax		|563.86		|17.95954			|37.5		|
+spal		|572.62		|24.10096			|25.0		|
+*************************************************************************
+*************************************************************************
+STARTED: 	2019-05-19 21:01:31.252000
+FINISHED:	2019-05-19 21:12:02.334000
+PARAMETERS: 
+Searcharea height (m) : 500.0	Searcharea width (m) : 500.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 200.0	Gridsize (m) : 50.0
+Sensor radius (m) : 50.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 102.56743386396376
+RUNS PROCESSED: 12
+HEIGHTxWIDTH: 500x500
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+grdy		|1138.25	|0.48			|71		|
+load		|546.67		|11.8995		|50.0		|
+quax		|655.58		|9.64016666667		|75.0		|
+spal		|510.17		|7.10516666667		|50.0		|
+*************************************************************************

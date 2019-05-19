@@ -3,8 +3,10 @@ from tkFileDialog import askopenfilename, asksaveasfilename
 import threading
 import re
 import os
+import gc
 import time
 import datetime
+from numpy import random
 
 from view.plot import Plot
 from view.settingselector import SettingSelector
@@ -98,6 +100,13 @@ class GUI(Frame):
 		if self.strategies == []:
 			self.strategies.append("greedy.py")
 		
+		c = self.entries[self._COURSEINDEX].get()
+		try:
+			f = float(c)
+			i = int(c)
+		except:
+			self.values[self._COURSEINDEX] = int(random.random_sample() * 360)
+		
 		self.searchKey = self.searchSelector.get(ACTIVE)
 	
 	def showSearcharea(self):
@@ -115,81 +124,143 @@ class GUI(Frame):
 		self.plot.showSimulation(search, speedUp)
 
 	def processSearch(self):
+		startTime = str(datetime.datetime.now())
+		self.readInputFields()
+		randCourse = False
+		try:
+			c = self.entries[self._COURSEINDEX].get()
+			f = float(c)
+			i = int(c)
+		except:
+			randCourse = True
+			
+		try:
+			tx = self.entries[self._TARGETXINDEX].get()
+			ty = self.entries[self._TARGETYINDEX].get()
+			f = float(tx)
+			i = int(tx)
+			f = float(ty)
+			i = int(ty)
+		except:
+			self.values[self._TARGETXINDEX] = 'r'
+			self.values[self._TARGETYINDEX] = 'r'
 		ackSimLength = dict()
 		ackProcTime = dict()
+		gridsizes = dict()
 		targets = []
-		self.readInputFields()
 		originalTargetX = self.values[self._TARGETXINDEX]
 		originalTargetY = self.values[self._TARGETYINDEX]
 		for strat in self.strategies:
 			ackSimLength[strat] = 0
 			ackProcTime[strat] = 0
 		runs = int(self.values[self._RUNSINDEX])
-		for i in range(runs):
-			self.values[self._TARGETXINDEX] = originalTargetX
-			self.values[self._TARGETYINDEX] = originalTargetY
-			premises = self.getPremises(self.strategies[0])
-			self.contr.simulate(premises)
-			sa = self.contr.getSearcharea()
-			dto = self.contr.getAckumulatedSearch()
-			self.processedSearches[dto.toString()] = dto
-			self.searchSelector.insert(0, dto.toString())
-			ackSimLength[self.strategies[0]] = ackSimLength[self.strategies[0]] + dto.len()
-			ackProcTime[self.strategies[0]] = ackProcTime[self.strategies[0]] + dto.getRTS() + (0.000001 * dto.getRTMS())
-			target = sa.getTarget()
-			x, y = target.getX(), target.getY()
-			orTar = Point(x, y)
-			targets.append(orTar)
-			if len(self.strategies) > 1:
-				self.values[self._TARGETXINDEX] = x
-				self.values[self._TARGETYINDEX] = -y
-				for j in range(1, len(self.strategies)):
-					strat = self.strategies[j]
-					premises = self.getPremises(strat)
-					self.contr.simulate(premises)
-					dto = self.contr.getAckumulatedSearch()
-					self.processedSearches[dto.toString()] = dto
-					self.searchSelector.insert(0, dto.toString())
-					ackSimLength[strat] = ackSimLength[strat] + dto.len()
-					ackProcTime[strat] = ackProcTime[strat] + dto.getRTS() + (0.000001 * dto.getRTMS())
-		mttds = dict()
-		for strat in self.strategies:
-			mttds[strat] = ackSimLength[strat] / float(runs)
-			
-		averageProcTime = dict()
-		for strat in self.strategies:
-			averageProcTime[strat] = ackProcTime[strat] / float(runs)
-			
+		executedRuns = 0
+		latestDTO = None
+		try:
+			gc.disable()
+			for i in range(runs):
+				print(repr(i) + '.0')
+				if randCourse:
+					self.values[self._COURSEINDEX] = int(random.random_sample() * 360)
+				self.values[self._TARGETXINDEX] = originalTargetX
+				self.values[self._TARGETYINDEX] = originalTargetY
+				strat = self.strategies[0]
+				premises = self.getPremises(strat)
+				self.contr.simulate(premises)
+				sa = self.contr.getSearcharea()
+				latestDTO = self.contr.getAckumulatedSearch()
+				self.processedSearches[latestDTO.toString()] = latestDTO
+				self.searchSelector.insert(0, latestDTO.toString())
+				ackSimLength[strat] = ackSimLength[strat] + latestDTO.len()
+				rt = latestDTO.getRTS() + (0.000001 * latestDTO.getRTMS())
+				print('running time: ' + repr(rt) + '\n')
+				ackProcTime[strat] = ackProcTime[strat] + rt
+				target = sa.getTarget()
+				x, y = target.getX(), target.getY()
+				orTar = Point(x, y)
+				targets.append(orTar)
+				if i == 0:
+					gridsizes[strat] = latestDTO.getGridsize()
+				if len(self.strategies) > 1:
+					self.values[self._TARGETXINDEX] = x
+					self.values[self._TARGETYINDEX] = -y
+					for j in range(1, len(self.strategies)):
+						print(repr(i) + '.' + repr(j))
+						strat = self.strategies[j]
+						premises = self.getPremises(strat)
+						self.contr.simulate(premises)
+						latestDTO = self.contr.getAckumulatedSearch()
+						rt = latestDTO.getRTS() + (0.000001 * latestDTO.getRTMS())
+						print('running time: ' + repr(rt) + '\n')
+						self.processedSearches[latestDTO.toString()] = latestDTO
+						self.searchSelector.insert(0, latestDTO.toString())
+						ackSimLength[strat] = ackSimLength[strat] + latestDTO.len()
+						ackProcTime[strat] = ackProcTime[strat] + rt
+						if i == 0:
+							gridsizes[strat] = latestDTO.getGridsize()
+				executedRuns += 1
+				if executedRuns % 3 == 0 and not executedRuns > runs - 4:
+					self.searchSelector.delete(0, END)
+					self.processedSearches.clear()
+					gc.collect()
+					print(gc.garbage)
+		except:
+			pass
+		finally:
+			if not gc.isenabled():
+				gc.collect()
+				gc.enable()
+		self.values[self._TARGETXINDEX] = originalTargetX
+		self.values[self._TARGETYINDEX]	= originalTargetY
 		totDist = 0
 		origo = Point(0, 0)
 		for p in targets:
 			totDist = totDist + p.distTo(origo)
 		
-		dto = self.contr.getAckumulatedSearch()
-		h = str(dto.getHeight())
-		w = str(dto.getWidth())
-		filename = "../../mttds/" + str(runs) + '_' + h + 'x' + w
+		mttds = dict()
+		averageProcTime = dict()
+		h = str(latestDTO.getHeight())
+		w = str(latestDTO.getWidth())
+		filename = "../../mttds/" + h + 'x' + w
 		for strat in self.strategies:
+			mttds[strat] = ackSimLength[strat] / float(executedRuns)
+			averageProcTime[strat] = ackProcTime[strat] / float(executedRuns)
 			tmp = strat[:-3]
 			filename = filename + '_' + tmp[:2] + tmp[-2:]
 		file = open(filename + ".txt", "a")
-		file.write('*****************************************************************\n')
-		file.write(str(datetime.datetime.now()))
-		file.write('\nUNITS : SECONDS AND METERS')
-		file.write('\nAVERAGE DISTANCE TO TARGET FROM ORIGO: ' + str(totDist / runs))
-		file.write('\nRUNS: ' + str(runs))
+		file.write('*************************************************************************\n')
+		file.write('STARTED: \t' + startTime + '\n')
+		endTime = str(datetime.datetime.now())
+		file.write('FINISHED:\t' + endTime + '\n')
+		file.write('PARAMETERS: ')
+		if randCourse:
+			self.values[self._COURSEINDEX] = 'r'
+		for i in range(len(self.values)):
+			if i % 2 == 0:
+				file.write('\n' + self.textFields[i] + ' : ' + str(self.values[i]))
+			else:
+				file.write('\t' + self.textFields[i] + ' : ' + str(self.values[i]))
+		file.write('\n\nUNITS : SECONDS AND METERS')
+		file.write('\nAVERAGE DISTANCE TO TARGET FROM ORIGO: ' + str(totDist / executedRuns))
+		file.write('\nRUNS PROCESSED: ' + str(executedRuns))
 		file.write('\nHEIGHTxWIDTH: ' + h + 'x' + w + '\n')
-		file.write('-----------------------------------------------------------------\n')
-		file.write('Strategy\t|MTTD\t\t|MEAN PROC TIME\t\t|\n')
-		file.write('-----------------------------------------------------------------\n')
+		file.write('-------------------------------------------------------------------------\n')
+		file.write('Strategy\t|MTTD\t\t|MEAN PROC TIME\t\t|GRIDSIZE\t|\n')
+		file.write('-------------------------------------------------------------------------\n')
 		for strat in self.strategies:
 			stratname = strat[:2] + strat[-5:-3] 
 			apt = str(averageProcTime[strat])
 			mttd = str(round(mttds[strat], 2))
+			if len(mttd) < 7:
+				mttd = mttd + '\t'
 			if len(apt) < 7:
 				apt = apt + '\t'
-			file.write(stratname + '\t\t|' + mttd + '\t\t|' + apt + '\t\t|\n')
-		file.write('*****************************************************************\n')
+			gs = str(gridsizes[strat])
+			if len(gs) < 7:
+				gs = gs + '\t'
+			file.write(stratname + '\t\t|' + mttd + '\t|' + apt + '\t\t|' + gs + '\t|\n')
+		file.write('*************************************************************************\n')
+		print('processing done')
 		
 	def showSearchResult(self):
 		self.readInputFields()

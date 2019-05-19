@@ -69,15 +69,18 @@ class Searcher():
 		return sa
 		
 	def startSearch(self):
+		i = 0
 		self.updateLatestLogEntry()
 		self.strategy.setVehicleAndArea(self.vehicle, self.area)
 		foundTarget = False
 		nextPos = Point(0, 0)
 		course = self.strategy.getCourseTowards(nextPos)
 		self.vehicle.setInitialCourse(course)
-		print(self.vehicle.getPosition().toString())
+		#print(self.vehicle.getPosition().toString())
 		while not self.vehicle.near(nextPos):
 			self.vehicle.updatePose(1)
+			i += 1
+			#print(repr(i))
 			foundTarget = self.strategy.foundTarget()
 			if foundTarget:
 				break
@@ -92,6 +95,8 @@ class Searcher():
 		self.vehicle.setDesiredSpeed(0)
 		while not self.vehicle.atPosition(nextPos) and not int(round(currentSpeed)) == 0:
 			self.vehicle.updatePose(1)
+			i += 1
+			#print(repr(i))
 			currentSpeed = self.vehicle.getCurrentSpeed()
 			foundTarget = self.strategy.foundTarget()
 			if foundTarget:
@@ -103,16 +108,17 @@ class Searcher():
 			return		
 
 		self.vehicle.updatePose(5)
+		i += 5
+		#print(repr(i))
 		self.updateSearch(showProb)
 		
 		showProb = True
 		self.dto.showProb(SearchareaDTO([self.area]))
-		i = 0
-		while not foundTarget and i < 50:
+		
+		while not foundTarget:
 			if isinstance(self.strategy, Greedy):
 				tmpPos = self.strategy.nextPos(self.vehicle, self.area)
 				course = self.strategy.getCourseTowards(tmpPos)
-				#print(repr(i))
 				if not tmpPos.equals(nextPos):
 					foundTarget = self.strategy.foundTarget()
 					self.updateSearch(showProb)
@@ -121,7 +127,7 @@ class Searcher():
 						self.strategy.updateSpeed(tmpPos)
 						self.vehicle.updatePose(1)
 				elif False and self.vehicle.near(tmpPos):
-					print('near')
+					#print('near')
 					self.vehicle.setPosition(tmpPos)
 					self.vehicle.updateLog()
 					self.updateSearch(showProb)
@@ -130,7 +136,6 @@ class Searcher():
 					self.vehicle.setCourse(course)
 					self.strategy.updateSpeed(tmpPos)
 					self.vehicle.updatePose(1)
-				#i = i + 1
 			else:
 				course = self.strategy.nextCourse(self.vehicle, self.area)
 				self.vehicle.setCourse(course)
@@ -140,8 +145,8 @@ class Searcher():
 				self.vehicle.updatePose(1)
 				self.updateSearch(showProb)
 				foundTarget = self.strategy.foundTarget()
-				
-		
+			i += 1
+			#print(repr(i))
 		self.setVehicleAtTarget()
 		
 	def setVehicleAtTarget(self):
