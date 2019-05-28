@@ -75,7 +75,6 @@ class MatrixMap(Searcharea):
 			logTo = log.get(i + 1)
 			posTo = logTo.getPose().getPosition()
 			found = self.getCellForPos(posTo).hasTarget()
-			found = found or self.getCellForPos(posTo).hasTarget()
 			if found:
 				maxPos = self.realTarget
 

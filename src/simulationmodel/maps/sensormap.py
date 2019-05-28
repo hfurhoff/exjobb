@@ -59,44 +59,47 @@ class SensorMap(Searcharea):
 		for i in range(log.length() - 1):
 			changes = []
 			logFrom = log.get(i)
-			logTo = log.get(i + 1)
 			posFrom = logFrom.getPose().getPosition()
 			fX = posFrom.getX()
 			fY = posFrom.getY()
+			xPos = int(round((fX + self.halfSideLength) / self.gridsize))
+			yPos = int(round((fY + self.halfSideLength) / self.gridsize))
+
+			logTo = log.get(i + 1)
 			posTo = logTo.getPose().getPosition()
-			tX = posTo.getX()
-			tY = posTo.getY()
-			dX = tX - fX
-			dY = tY - fY
-			averageSpeed = (logFrom.getSpeed() + logTo.getSpeed()) / 2
-			steps = averageSpeed / dt
-			xPos = int(round((fX + dX) + self.halfSideLength) / self.gridsize)
-			yPos = int(round((fY + dY) + self.halfSideLength) / self.gridsize)
-			
+			found = self.getCellForPos(posTo).hasTarget()
+			if found:
+				maxPos = self.realTarget
+
+			priorProb = self.data[yPos][xPos]
 			if i == log.length() - 2:
 				self.data[yPos][xPos] = 0
+			if showProb and not priorProb == self.data[yPos][xPos]:
+				changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
 
-			if showProb:
-				if self.firstTimeZeroProb:
-					changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
-				else:
-					for yy in range(self.cells):
-						for xx in range(self.cells):
-							changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
+			if not self.firstTimeZeroProb and showProb:
+				for yy in range(self.cells):
+					for xx in range(self.cells):
+						changes.append(self.getCellDTO(self.data[yy][xx], xx, yy))
 				self.firstTimeZeroProb = True
-			else:
-				x, y = self.posToCellIndex(maxPos)
+
+			if not showProb and self.firstTimeZeroProb:
+				x, y = self.sensorMapPosToCellIndex(maxPos)
 				zeroProbs = [0] * self.cells
 				for i in range(self.cells):
 					zeroProbs[i] = [0] * self.cells
 				zeroProbs[y][x] = 1
-				if self.firstTimeZeroProb:
-					for i in range(self.cells):
-						for j in range(self.cells):
-							changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
-					self.firstTimeZeroProb = False
+				for i in range(self.cells):
+					for j in range(self.cells):
+						changes.append(self.getCellDTO(zeroProbs[i][j], j, i))
+				self.firstTimeZeroProb = False
 			returnData.append(changes)
-		return returnData
+		return returnData		
+		
+	def sensorMapPosToCellIndex(self, pos):
+		x, y = self.posToCellIndex(pos)
+		x, y = x + 1, y + 1
+		return x, y
 		
 	def getAdjacentCells(self, pos):
 		x, y = self.posToCellIndex(pos)
@@ -140,8 +143,15 @@ class SensorMap(Searcharea):
 				break
 		return cells
 		
+	def cellIndexToPos(self, xindex, yindex):
+		dy = yindex * self.gridsize
+		dx = xindex * self.gridsize
+		y = dy - self.halfSideLength# - (np.sign(dy - self.halfSideLength) * float(self.gridsize) * 0.5)
+		x = dx - self.halfSideLength# - (np.sign(dx - self.halfSideLength) * float(self.gridsize) * 0.5)
+		return Point(x, y)
+		
 	def getMargin(self):
-		return self.gridsize * 0.2
+		return self.gridsize * 0.3
 
 	def raiseNearby(self, sensor, pos):
 		pass

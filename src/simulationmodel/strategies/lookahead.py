@@ -13,12 +13,14 @@ import numpy as np
 class Lookahead(NavigationStrategy):
 
 	depth = None
+	sensor = None
 
 	def __init__(self):
 		pass
 		
 	def makeArea(self, area, sensor, depth):
 		self.setDepth(depth)
+		self.sensor = sensor
 		return MatrixMap(area)
 		
 	def nextCourse(self, vehicle, area):
@@ -53,7 +55,7 @@ class Lookahead(NavigationStrategy):
 		return self.target
 		
 	def atPositionWithExtraMargin(self, vehicle, area, target):
-		margin = area.getGridsize()
+		margin = max([area.getGridsize(), self.sensor.getRadius() * 0.9])
 		tarx = target.getX()
 		tary = target.getY()
 		pos = vehicle.getPosition()

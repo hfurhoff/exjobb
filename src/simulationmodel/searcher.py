@@ -60,7 +60,7 @@ class Searcher():
 		self.vehicle.setInitialCourse(course)
 		while not self.vehicle.near(nextPos):
 			self.vehicle.updatePose(1)
-			foundTarget = self.foundTarget()
+			foundTarget = self.foundTarget() and self.strongConnection()
 			if foundTarget:
 				break
 		
@@ -75,7 +75,7 @@ class Searcher():
 		while not self.vehicle.atPosition(nextPos) and not int(round(currentSpeed)) == 0:
 			self.vehicle.updatePose(1)
 			currentSpeed = self.vehicle.getCurrentSpeed()
-			foundTarget = self.foundTarget()
+			foundTarget = self.foundTarget() and self.strongConnection()
 			if foundTarget:
 				break
 
@@ -105,6 +105,8 @@ class Searcher():
 					self.vehicle.setCourse(course)
 					self.strategy.updateSpeed(tmpPos)
 					self.vehicle.updatePose(1)
+					if self.foundTarget() and self.strongConnection():
+						break
 			else:
 				course = self.strategy.nextCourse(self.vehicle, self.area)
 				self.vehicle.setCourse(course)

@@ -71,8 +71,10 @@ class Spiral(NavigationStrategy):
 
 	def localSearch(self, localSearch):
 		dia = self.vehicle.getSensor().getDiameter() * 0.7
-		self.makeSpiral(dia)
+		#self.makeSpiral(dia)
+		target = self.target
 		super(Spiral, self).localSearch(localSearch)
+		self.target = target
 		
 	def test(self):
 		print('SpiralStrat')

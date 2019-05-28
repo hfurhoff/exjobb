@@ -85,7 +85,8 @@ class QuadtreeMap(Searcharea):
 			found = self.getCellForPos(posTo).hasTarget()
 			found = found or self.getCellForPos(posTo).hasTarget()
 			if found:
-				maxPos = self.target
+				pass
+				#maxPos = self.target
 			else:
 				sensorRange = sensor.getMaxRange()
 				depth = int(round(sensorRange / self.getGridsize()) + 1)
