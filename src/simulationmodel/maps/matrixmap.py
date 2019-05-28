@@ -15,7 +15,8 @@ from dto.celldto import CellDTO
 class MatrixMap(Searcharea):
 
 	found = False
-			
+	changesInStore = []
+	
 	def __init__(self, a):
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
@@ -59,6 +60,10 @@ class MatrixMap(Searcharea):
 		dt = log.getTimestepLength()
 		for i in range(log.length() - 1):
 			changes = []
+			if len(self.changesInStore) > 0:
+				for c in self.changesInStore:
+					changes.append(c)
+				self.changesInStore = []
 			logFrom = log.get(i)
 			sensor = logFrom.getSensor()
 			posFrom = logFrom.getPose().getPosition()
@@ -75,7 +80,7 @@ class MatrixMap(Searcharea):
 				maxPos = self.realTarget
 
 			sensorRange = sensor.getMaxRange()
-			depth = int(round(sensorRange)) + 1
+			depth = int(round(sensorRange / self.getGridsize()) + 1)
 			adjCells = self.getAdjacentCells(posFrom, depth)
 			self.data[yPos][xPos] = 0
 			if showProb:
@@ -145,3 +150,20 @@ class MatrixMap(Searcharea):
 		
 	def getMargin(self):
 		return self.gridsize * 0.4
+
+	def raiseNearby(self, sensor, pos):
+		sensorRange = sensor.getMaxRange()
+		d = int(round(sensorRange / self.getGridsize()) + 1)
+		adjCells = self.getAdjacentCells(pos, d)
+		for cell in adjCells:
+			cpos = cell.getPosition()
+			dist = pos.distTo(cpos)
+			if dist <= sensorRange:
+				x, y = self.posToCellIndex(cpos)
+				probOfDetection = sensor.probabilityOfDetection(dist)
+				if probOfDetection == 1:
+					self.data[y][x] = 0
+				else:
+					if not self.data[y][x] == 0:
+						self.data[y][x] = self.data[y][x] + (sensor.getRadiusProb() - probOfDetection) + 0.5
+				self.changesInStore.append(self.getCellDTO(self.data[y][x], x, y))

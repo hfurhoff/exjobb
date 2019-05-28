@@ -17,6 +17,10 @@ class Lookahead(NavigationStrategy):
 	def __init__(self):
 		pass
 		
+	def makeArea(self, area, sensor, depth):
+		self.setDepth(depth)
+		return MatrixMap(area)
+		
 	def nextCourse(self, vehicle, area):
 		nextPos = self.nextPos(vehicle, area)
 		course = self.getCourseTowards(nextPos)
@@ -25,20 +29,14 @@ class Lookahead(NavigationStrategy):
 	def nextPos(self, vehicle, area):
 		pos = vehicle.getPosition()
 		if self.atPositionWithExtraMargin(vehicle, area, self.target): 
-			#get new target
 			sensor = vehicle.getSensor()
 			d = int(round(self.depth * sensor.getRadius() / area.getGridsize()) + 1)
-			#print('-------------------------------------------------------------------')
 			currentHeading = vehicle.getHeading()
 			currentCell = area.getCellForPos(pos)
 			targetCell = currentCell
 			i = 1
 			cutoff = 0.1
-			#print('targetCellProb: ' + repr(float(targetCell.getProb())) + ', cutoff: ' + repr(cutoff))
-			#print(repr(float(targetCell.getProb()) < cutoff and d + i < area.getCells()))
 			while float(targetCell.getProb()) < cutoff and d + i < area.getCells():
-				'''print('targetCellProb: ' + repr(targetCell.getProb()) + ', cutoff: ' + repr(cutoff))
-				print('depth: ' + repr(d + i))'''
 				cells = area.getAdjacentCells(pos, d + i)
 				targetCell = cells[0]
 				maxValue = self.calculateValue(vehicle, targetCell)
@@ -52,13 +50,10 @@ class Lookahead(NavigationStrategy):
 				if d + i >= area.getCells() - 1:
 					i = 1
 					cutoff = cutoff / 2.0
-			'''print('Target: ' + self.target.toString() + ', diff: ' + repr(currentHeading - self.getCourseFromTo(pos, targetCell.getPosition())))
-			print('-------------------------------------------------------------------')'''
 		return self.target
 		
 	def atPositionWithExtraMargin(self, vehicle, area, target):
-		#sensorRad = vehicle.getSensor().getRadius() * 0.6
-		margin = area.getGridsize()#sensorRad
+		margin = area.getGridsize()
 		tarx = target.getX()
 		tary = target.getY()
 		pos = vehicle.getPosition()
@@ -84,15 +79,10 @@ class Lookahead(NavigationStrategy):
 			else:
 				diff = diff - 360
 		diff = abs(diff)
-		reward = cell.getProb()#np.power(cell.getProb() * 10, 3)
+		reward = cell.getProb()
 		steps = int(diff / tr) + 1
 		cost = steps * 0.5
-		'''reward = int(reward * 1000)
-		cost = int(cost * 1000)'''
-		value = reward# / cost) + reward
-		#print('value: ' + repr(value) + '\treward: ' + repr(reward) + '\tcost: ' + repr(cost) + '\tpos: ' + cpos.toString())
-		#print('diff: ' + repr(diff) + ', steps: ' + repr(steps) + ', tr: ' + repr(tr))
-		#print('diff: ' + repr(diff) + ', prob: ' + repr(cell.getProb()) + ', value: ' + repr(value))
+		value = reward
 		return value
 		
 	def setDepth(self, depth):

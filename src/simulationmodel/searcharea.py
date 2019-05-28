@@ -28,6 +28,10 @@ class Searcharea:
 	stddev = 0.4
 	middle = None
 	firstTimeZeroProb = True
+	sensor = None
+		
+	def __init__(self, sensor):
+		self.sensor = sensor
 		
 	@abstractmethod
 	def updateSearchBasedOnLog(self, log):
@@ -35,6 +39,10 @@ class Searcharea:
 
 	@abstractmethod
 	def isCoverage(self):
+		pass
+		
+	@abstractmethod
+	def raiseNearby(self, sensor, pos):
 		pass
 		
 	def randTarget(self):

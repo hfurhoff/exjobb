@@ -21,12 +21,15 @@ class Sensor():
 	def probabilityOfDetection(self, dist):
 		prob = 1
 		dist = abs(dist)
-		if dist > self.radius:
+		if dist >= self.radius:
 			max = norm.pdf(self.mean, loc = self.mean, scale = self.stddev)
 			prob = norm.pdf(dist, loc = self.mean, scale = self.stddev) / (max)
 		if dist > self.getMaxRange():
 			prob = 0
 		return prob
+		
+	def getRadiusProb(self):
+		return self.probabilityOfDetection(self.getRadius())
 		
 	def getMaxRange(self):
 		return self.radius * 2.0

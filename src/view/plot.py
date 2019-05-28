@@ -70,7 +70,7 @@ class Plot(Observer):
 	def radFromCenter(self, x, ex, y, ey):
 		return (np.power(x, 2) / np.power(ex, 2)) + (np.power(y, 2) / np.power(ey, 2))
 		
-	def showSimulation(self, dto, speedUp):
+	def showSimulation(self, dto, speedUp, viewingStep):
 		#print(repr(data))
 		#print(repr(range(len(data))))
 		
@@ -101,7 +101,7 @@ class Plot(Observer):
 				data[cell.getY()][cell.getX()] = cell.getProb()
 						
 			if speedUp:
-				if i % int(dto.len() / 10) == 0:
+				if i % viewingStep == 0:
 					im, cbar = self.displayIm(fig, ax, im, cbar, dto, i, xpath, ypath, log, data)
 				elif i >= dto.len() - 10:
 					im, cbar = self.displayIm(fig, ax, im, cbar, dto, i, xpath, ypath, log, data)
@@ -140,10 +140,10 @@ class Plot(Observer):
 		ax[1].plot(xpath, ypath, 'k')
 		ellipse = Ellipse([0, 0], dto.getWidth(), dto.getHeight(), 0, fill=False, linestyle='-')
 		ax[1].add_artist(ellipse)
-		circle = plt.Circle((xpath[-1], ypath[-1]), sensorRad, color='blue')
-		#bigCircle = plt.Circle((xpath[-1], ypath[-1]), sensorMax, color='green')
-		#ax[1].add_artist(bigCircle)
-		ax[1].add_artist(circle)
+		outerCircle = plt.Circle((xpath[-1], ypath[-1]), sensorMax, color='green')
+		innerCircle = plt.Circle((xpath[-1], ypath[-1]), sensorRad, color='blue')
+		ax[1].add_artist(outerCircle)
+		ax[1].add_artist(innerCircle)
 		fig.suptitle('Timestep: ' + repr(i))
 		
 		if dto.isCoverage():

@@ -1,15 +1,9 @@
 from util.observer import Observer
+
 from simulationmodel.navigationstrategy import NavigationStrategy
 from simulationmodel.strategies.greedy import Greedy
-from simulationmodel.strategies.spiral import Spiral
-from simulationmodel.strategies.lookahead import Lookahead
 
 from simulationmodel.searcharea import Searcharea 
-from simulationmodel.maps.quadtreemap import QuadtreeMap
-from simulationmodel.maps.coveragemap import CoverageMap
-from simulationmodel.maps.matrixmap import MatrixMap
-from simulationmodel.maps.sensormap import SensorMap
-
 from simulationmodel.vehicle import Vehicle
 
 from dto.searchareadto import SearchareaDTO
@@ -19,6 +13,7 @@ from dto.sensor import Sensor
 from dto.point import Point
 
 from pydoc import locate
+from numpy import random
 import numpy as np
 
 class Searcher():
@@ -31,7 +26,8 @@ class Searcher():
 	lastEntry = None
 	ackumulatedSearch = None
 	dto = None
-
+	sensor = None
+	
 	def __init__(self, strategy, area, vehicle, depth):
 		str = strategy
 		classname = str[:-(len(str) - 1)].upper() + str[1:]
@@ -39,22 +35,8 @@ class Searcher():
 		klass = getattr(mod, classname)
 		self.strategy = klass()
 		sensor = vehicle.getSensor()
-		'''bigDia = area.bigDia()
-		gs = int((2 * bigDia) / 20.0) + 1
-		if gs < int(sensor.getRadius()):
-			gs = int(sensor.getRadius())
-		if gs < 1:
-			gs = 1
-		area.setGridsize(gs)'''
-		if isinstance(self.strategy, Greedy):
-			self.area = SensorMap(area, sensor)
-		elif isinstance(self.strategy, Lookahead):
-			self.strategy.setDepth(depth)
-			self.area = MatrixMap(area)
-		elif isinstance(self.strategy, Spiral):
-			self.area = CoverageMap(area)
-		else:
-			self.area = QuadtreeMap(area)
+		self.sensor = sensor
+		self.area = self.strategy.makeArea(area, sensor, depth)
 		self.vehicle = Vehicle(vehicle)
 		self.lastEntry = self.vehicle.latestLogEntry()
 		self.firstEntry = self.lastEntry
@@ -76,40 +58,33 @@ class Searcher():
 		nextPos = Point(0, 0)
 		course = self.strategy.getCourseTowards(nextPos)
 		self.vehicle.setInitialCourse(course)
-		#print(self.vehicle.getPosition().toString())
 		while not self.vehicle.near(nextPos):
 			self.vehicle.updatePose(1)
-			i += 1
-			#print(repr(i))
-			foundTarget = self.strategy.foundTarget()
+			foundTarget = self.foundTarget()
 			if foundTarget:
 				break
 		
 		showProb = False
 		self.updateSearch(showProb)
 		if foundTarget:
-			self.setVehicleAtTarget()
+			self.moveVehicleTowardsTarget()
 			return		
 
 		currentSpeed = self.vehicle.getCurrentSpeed()
 		self.vehicle.setDesiredSpeed(0)
 		while not self.vehicle.atPosition(nextPos) and not int(round(currentSpeed)) == 0:
 			self.vehicle.updatePose(1)
-			i += 1
-			#print(repr(i))
 			currentSpeed = self.vehicle.getCurrentSpeed()
-			foundTarget = self.strategy.foundTarget()
+			foundTarget = self.foundTarget()
 			if foundTarget:
 				break
 
 		if foundTarget:
 			self.vehicle.setDesiredSpeed(self.vehicle.getMaxSpeed())
-			self.setVehicleAtTarget()
+			self.moveVehicleTowardsTarget()
 			return		
 
 		self.vehicle.updatePose(5)
-		i += 5
-		#print(repr(i))
 		self.updateSearch(showProb)
 		
 		showProb = True
@@ -120,18 +95,12 @@ class Searcher():
 				tmpPos = self.strategy.nextPos(self.vehicle, self.area)
 				course = self.strategy.getCourseTowards(tmpPos)
 				if not tmpPos.equals(nextPos):
-					foundTarget = self.strategy.foundTarget()
+					foundTarget = self.foundTarget()
 					self.updateSearch(showProb)
 					nextPos = tmpPos
 					if not foundTarget:
 						self.strategy.updateSpeed(tmpPos)
 						self.vehicle.updatePose(1)
-				elif False and self.vehicle.near(tmpPos):
-					#print('near')
-					self.vehicle.setPosition(tmpPos)
-					self.vehicle.updateLog()
-					self.updateSearch(showProb)
-					foundTarget = self.strategy.foundTarget()
 				else:
 					self.vehicle.setCourse(course)
 					self.strategy.updateSpeed(tmpPos)
@@ -139,17 +108,29 @@ class Searcher():
 			else:
 				course = self.strategy.nextCourse(self.vehicle, self.area)
 				self.vehicle.setCourse(course)
-				if not isinstance(self.strategy, Spiral):
+				if not self.area.isCoverage():
 					nextPos = self.strategy.getTarget()
 					self.strategy.updateSpeed(nextPos)
 				self.vehicle.updatePose(1)
 				self.updateSearch(showProb)
-				foundTarget = self.strategy.foundTarget()
-			i += 1
-			#print(repr(i))
-		self.setVehicleAtTarget()
+				foundTarget = self.foundTarget()
+		self.moveVehicleTowardsTarget()
 		
-	def setVehicleAtTarget(self):
+	def moveVehicleTowardsTarget(self):
+		self.strategy.localSearch(True)
+		showProb = True
+		while not self.strongConnection():
+			print('local search')
+			if self.foundTarget():
+				self.area.raiseNearby(self.sensor, self.vehicle.getPosition())
+				print('near target')
+			course = self.strategy.nextCourse(self.vehicle, self.area)
+			self.vehicle.setCourse(course)
+			if not self.area.isCoverage():
+				nextPos = self.strategy.getTarget()
+				self.strategy.updateSpeed(nextPos)
+			self.vehicle.updatePose(1)
+			self.updateSearch(showProb)
 		target = self.area.getTarget()
 		while not self.strategy.atPosition(self.vehicle, self.area, target):
 			desiredCourse = self.strategy.getCourseTowards(target)
@@ -158,14 +139,16 @@ class Searcher():
 			self.vehicle.updatePose(1)
 		self.vehicle.setPosition(target)
 		self.vehicle.updateLog()
-		self.updateSearch(False)
+		if not self.area.isCoverage():
+			showProb = False
+		self.updateSearch(showProb)
 		self.dto.setEndState(SearchareaDTO([self.area]))
 		
 	def updateSearch(self, showProb):
 		sublog = self.vehicle.logFrom(self.lastEntry)
 		data = None
 		if not showProb:
-			if self.strategy.foundTarget():
+			if self.foundTarget():
 				data = self.area.updateSearchBasedOnLog(sublog, showProb, self.area.getTarget())
 				data.append([])
 			else:
@@ -175,6 +158,36 @@ class Searcher():
 		for changes in data:
 			self.dto.appendChanges(changes)
 		self.updateLatestLogEntry()
+		
+	def foundTarget(self):
+		vp = self.vehicle.getPosition()
+		sensor = self.vehicle.getSensor()
+		targetDist = vp.distTo(self.area.getTarget())
+		probOfTargetDetection = sensor.probabilityOfDetection(targetDist)
+		rand = random.random_sample()
+		found = False
+		if rand < probOfTargetDetection:
+			found = True
+		else:
+			tp = self.area.getTarget()
+			tpx, tpy = self.area.posToCellIndex(tp)
+			vpx, vpy = self.area.posToCellIndex(vp)
+			found = vpx == tpx and vpy == tpy
+		if isinstance(self.strategy, Greedy) and not self.strongConnection():
+			found = False
+		if found:
+			print('got connection')
+		return found
+		
+	def strongConnection(self):
+		vp = self.vehicle.getPosition()
+		targetDist = vp.distTo(self.area.getTarget())
+		print('dist from target: ' + repr(targetDist))
+		print('sensor radius: ' + repr(self.sensor.getRadius()))
+		if targetDist < self.sensor.getRadius():
+			return True
+		else:
+			return False
 		
 	def updateLatestLogEntry(self):
 		self.lastEntry = self.vehicle.latestLogEntry()

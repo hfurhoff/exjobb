@@ -17,6 +17,7 @@ import copy
 class QuadtreeMap(Searcharea):
 	
 	tree = None
+	changesInStore = []
 	
 	def __init__(self, a):
 		self.height = int(round(a.getHeight()))
@@ -66,6 +67,10 @@ class QuadtreeMap(Searcharea):
 		dt = log.getTimestepLength()
 		for i in range(log.length() - 1):
 			changes = []
+			if len(self.changesInStore) > 0:
+				for c in self.changesInStore:
+					changes.append(c)
+				self.changesInStore = []
 			logFrom = log.get(i)
 			sensor = logFrom.getSensor()
 			posFrom = logFrom.getPose().getPosition()
@@ -83,7 +88,7 @@ class QuadtreeMap(Searcharea):
 				maxPos = self.target
 			else:
 				sensorRange = sensor.getMaxRange()
-				depth = int(round(sensorRange)) + 1
+				depth = int(round(sensorRange / self.getGridsize()) + 1)
 				adjCells = self.getAdjacentCells(leafPos, depth)
 				leaf.updateProb(0)
 				if showProb:
@@ -134,6 +139,9 @@ class QuadtreeMap(Searcharea):
 	def getMaxPos(self):
 		return self.tree.getMaxPos()
 		
+	def getMaxProb(self):
+		return self.tree.getMaxProb()
+		
 	def getData(self):
 		data = [0] * self.cells
 		for i in range(self.cells):
@@ -171,4 +179,27 @@ class QuadtreeMap(Searcharea):
 		return cells
 		
 	def getMargin(self):
-		return self.gridsize
+		return self.gridsize * 0.5
+
+	def raiseNearby(self, sensor, pos):
+		leaf = self.tree.getLeafForPos(pos)
+		leafPos = leaf.getPosition()
+		sensorRange = sensor.getMaxRange()
+		d = int(round(sensorRange / self.getGridsize()) + 1)
+		adjCells = self.getAdjacentCells(leafPos, d)
+		leaf.updateProb(0)
+		xPos, yPos = self.posToCellIndex(leafPos)
+		self.changesInStore.append(self.getCellDTO(leaf.getProb(), xPos, yPos))
+		for cell in adjCells:
+			cpos = cell.getPosition()
+			dist = pos.distTo(cpos)
+			if dist <= sensorRange:
+				x, y = self.posToCellIndex(cpos)
+				probOfDetection = sensor.probabilityOfDetection(dist)
+				if probOfDetection == 1:
+					self.data[y][x].updateProb(0)
+				else:
+					cProb = self.data[y][x].getProb()
+					if not cProb == 0:
+						self.data[y][x].updateProb(cProb + (sensor.getRadiusProb() - probOfDetection) + 0.5)
+				self.changesInStore.append(self.getCellDTO(self.data[y][x].getProb(), x, y))

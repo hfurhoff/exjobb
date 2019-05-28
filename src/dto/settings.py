@@ -50,8 +50,7 @@ class Settings():
 			entranceY = -halfSideLength
 			
 		return Point(entranceX, entranceY)
-		
-		
+				
 	def getVehicle(self):
 		return self.vehicle
 		

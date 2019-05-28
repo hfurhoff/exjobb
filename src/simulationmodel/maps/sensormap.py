@@ -142,3 +142,6 @@ class SensorMap(Searcharea):
 		
 	def getMargin(self):
 		return self.gridsize * 0.2
+
+	def raiseNearby(self, sensor, pos):
+		pass

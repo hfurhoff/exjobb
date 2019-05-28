@@ -21,3 +21,49 @@ load		|818.0		|44.687			|50.0		|
 quax		|760.0		|16.221			|75.0		|
 spal		|817.0		|33.24			|50.0		|
 *************************************************************************
+*************************************************************************
+STARTED: 	2019-05-19 22:45:36.604000
+FINISHED:	2019-05-20 05:03:55.591000
+PARAMETERS: 
+Searcharea height (m) : 500.0	Searcharea width (m) : 1000.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 200.0	Gridsize (m) : 50.0
+Sensor radius (m) : 75.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 254.1446548042767
+RUNS PROCESSED: 19
+HEIGHTxWIDTH: 500x1000
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+grdy		|2827.37	|1.147			|107		|
+load		|1200.21	|67.3810526316		|50.0		|
+quax		|1309.32	|36.1062631579		|75.0		|
+spal		|1569.26	|71.9503684211		|50.0		|
+*************************************************************************
+*************************************************************************
+STARTED: 	2019-05-20 22:14:33.155000
+FINISHED:	2019-05-21 10:56:27.478000
+PARAMETERS: 
+Searcharea height (m) : 500.0	Searcharea width (m) : 1000.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 1000.0	Gridsize (m) : 25.0
+Sensor radius (m) : 50.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1.0
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 176.81838240318078
+RUNS PROCESSED: 76
+HEIGHTxWIDTH: 500x1000
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+grdy		|3342.26	|1.58459210526		|71		|
+load		|1309.99	|237.330013158		|25.0		|
+quax		|1782.47	|143.545092105		|37.5		|
+spal		|1378.33	|217.833		|25.0		|
+*************************************************************************

@@ -6,6 +6,7 @@ import os
 import gc
 import time
 import datetime
+import sys, traceback
 from numpy import random
 
 from view.plot import Plot
@@ -32,6 +33,7 @@ class GUI(Frame):
 	_SENSORDIAMETERINDEX = 8
 	_TURNINGRADIUSINDEX = 9
 	_LOOKAHEADINDEX = 10
+	_SPEEDUPFACTORINDEX = 11
 	
 	contr = Controller.getInstance()
 	
@@ -59,9 +61,10 @@ class GUI(Frame):
 					'Gridsize (m)',
 					'Sensor radius (m)',
 					'Turningradius (degrees/second)',
-					'Lookahead-depth (times sensor-reach)']
+					'Lookahead-depth (times sensor-reach)',
+					'SpeedUp-factor']
 
-	values = [20, 20, 30, 1, 'n', 'n', 1, 1, 1, 25, 1]
+	values = [20, 20, 30, 1, 'n', 'n', 1, 1, 1, 25, 1, 2]
 	strategies = ["greedy.py"]
 	processedSearches = dict()
 	searchKey = None
@@ -107,6 +110,13 @@ class GUI(Frame):
 		except:
 			self.values[self._COURSEINDEX] = int(random.random_sample() * 360)
 		
+		try:
+			self.values[self._SPEEDUPFACTORINDEX] = int(self.values[self._SPEEDUPFACTORINDEX])
+			if self.values[self._SPEEDUPFACTORINDEX] < 1:
+				self.values[self._SPEEDUPFACTORINDEX] = 1
+		except:
+			self.values[self._SPEEDUPFACTORINDEX] = 1
+		
 		self.searchKey = self.searchSelector.get(ACTIVE)
 	
 	def showSearcharea(self):
@@ -121,7 +131,7 @@ class GUI(Frame):
 		self.readInputFields()
 		search = self.processedSearches[self.searchKey]
 		speedUp = self.speedUp.get()
-		self.plot.showSimulation(search, speedUp)
+		self.plot.showSimulation(search, speedUp, self.values[self._SPEEDUPFACTORINDEX])
 
 	def processSearch(self):
 		startTime = str(datetime.datetime.now())
@@ -205,7 +215,10 @@ class GUI(Frame):
 					gc.collect()
 					print(gc.garbage)
 		except:
-			pass
+			print "Exception in user code:"
+			print '-'*60
+			traceback.print_exc(file=sys.stdout)
+			print '-'*60
 		finally:
 			if not gc.isenabled():
 				gc.collect()

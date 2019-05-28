@@ -15,6 +15,7 @@ class NavigationStrategy:
 	vehicle = None
 	area = None
 	target = Point(0, 0)
+	localSearch = False
 		
 	@abstractmethod
 	def nextCourse(self, vehicle, area):
@@ -23,33 +24,10 @@ class NavigationStrategy:
 	@abstractmethod
 	def nextPos(self, vehicle, area):
 		pass
-		
-	def foundTarget(self):
-		#print('checking')
 
-		vp = self.vehicle.getPosition()
-		sensor = self.vehicle.getSensor()
-		targetDist = vp.distTo(self.area.getTarget())
-		probOfTargetDetection = sensor.probabilityOfDetection(targetDist)
-		rand = random.random_sample()
-		'''if probOfTargetDetection != 0:
-			print('----------------------------------------------------------')
-			print('probabilityOfDetection: ' + repr(probOfTargetDetection))
-			print('rand: ' + repr(rand))
-			print(repr(rand < probOfTargetDetection))'''
-		if rand < probOfTargetDetection:
-			'''print('**********************************************')
-			print('found')
-			print('**********************************************')'''
-			return True
-		
-		tp = self.area.getTarget()
-		tpx, tpy = self.area.posToCellIndex(tp)
-		vpx, vpy = self.area.posToCellIndex(vp)
-		found = vpx == tpx and vpy == tpy
-		'''if(found):
-			print('found target')'''
-		return found
+	@abstractmethod
+	def makeArea(self, area, sensor, depth):
+		pass
 		
 	def setVehicleAndArea(self, vehicle, area):
 		self.vehicle = vehicle
@@ -97,3 +75,7 @@ class NavigationStrategy:
 		
 	def getTarget(self):
 		return self.target
+		
+	def localSearch(self, localSearch):
+		self.localSearch = localSearch
+		self.target = self.vehicle.getPosition()

@@ -3,6 +3,7 @@ from dto.course import Course
 from dto.speed import Speed
 from dto.turningradiusequation import TurningRadiusEquation
 from util.log import Log
+from util.util import Util
 from dto.sensor import Sensor
 from dto.point import Point
 from dto.vehicledto import VehicleDTO
@@ -62,13 +63,7 @@ class Vehicle():
 			p = self.getPosition()
 			currentHeading = self.getHeading()
 			if currentHeading != self.desiredHeading:
-				diff = self.desiredHeading - currentHeading
-				sign = diff / abs(diff)
-				if abs(diff) > 180:
-					if sign < 0:
-						diff = diff + 360
-					else:
-						diff = diff - 360
+				diff = Util.unwrap(self.desiredHeading - currentHeading)
 				sign = diff / abs(diff)
 				if abs(diff) > self.turningRadius:
 					currentHeading = currentHeading + sign * self.turningRadius

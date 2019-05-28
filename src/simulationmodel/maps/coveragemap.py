@@ -146,3 +146,6 @@ class CoverageMap(Searcharea):
 		
 	def getMargin(self):
 		return self.gridsize * 0.4
+
+	def raiseNearby(self, sensor, pos):
+		pass
