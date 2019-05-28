@@ -77,6 +77,7 @@ class Plot(Observer):
 		log = dto.getLog()
 		data = dto.getData()
 		fig, ax = plt.subplots(ncols=2, figsize=[2 * 6.5, 4.8])
+		fig.canvas.set_window_title(dto.getStrategyName() + repr(dto.getWidth()) + 'x' + repr(dto.getHeight()))
 		cmap = self.getCmap(dto.isCoverage())
 		
 		halfSideLength = dto.getHalfSideLength()
@@ -144,7 +145,8 @@ class Plot(Observer):
 		innerCircle = plt.Circle((xpath[-1], ypath[-1]), sensorRad, color='blue')
 		ax[1].add_artist(outerCircle)
 		ax[1].add_artist(innerCircle)
-		fig.suptitle('Timestep: ' + repr(i))
+		fig.suptitle('Timestep: ' + repr(i) + ' : ' + dto.getStrategyName())
+		
 		
 		if dto.isCoverage():
 			ax[0].set_title("Coverage plot")
