@@ -82,8 +82,9 @@ class MatrixMap(Searcharea):
 			sensorRange = sensor.getMaxRange()
 			depth = int(round(sensorRange / self.getGridsize()) + 1)
 			adjCells = self.getAdjacentCells(posFrom, depth)
+			priorProb = self.data[yPos][xPos]
 			self.data[yPos][xPos] = 0
-			if showProb:
+			if showProb and not priorProb == self.data[yPos][xPos]:
 				changes.append(self.getCellDTO(self.data[yPos][xPos], xPos, yPos))
 			for cell in adjCells:
 				cpos = cell.getPosition()
@@ -91,8 +92,9 @@ class MatrixMap(Searcharea):
 				if dist <= sensorRange:
 					x, y = self.posToCellIndex(cpos)
 					probOfDetection = sensor.probabilityOfDetection(dist)
+					priorProb = self.data[y][x]
 					self.data[y][x] = self.data[y][x] * (1.0 - probOfDetection)
-					if showProb:
+					if showProb and not priorProb == self.data[y][x]:
 						if self.firstTimeZeroProb:
 							changes.append(self.getCellDTO(self.data[y][x], x, y))
 			if not self.firstTimeZeroProb and showProb:

@@ -55,21 +55,22 @@ class Spiral(NavigationStrategy):
 		a = 0.0
 		turns = 0
 		newWp = Point(0, 0)
-		while self.area.inArea(newWp):
+		while r < self.area.getHalfSideLength():
 			turns = int(a / 360)
 			a += 360 / (8 + 8 * turns)
 			r = dia * (a / 360.0)
 			x = r * np.cos(np.deg2rad(a))
 			y = r * np.sin(np.deg2rad(a))
 			newWp = Point(x, y).translate(pos.getX(), pos.getY())
-			self.wps.append(newWp)
+			if self.area.inArea(newWp):
+				self.wps.append(newWp)
 		self.target = self.wps.pop(0)
 		
 	def currAngle(self, pos):
 		return np.degrees(np.arccos(pos.getX() / pos.distTo(Point(0, 0)))) % 360
 
 	def localSearch(self, localSearch):
-		dia = self.vehicle.getSensor().getDiameter() * 0.9
+		dia = self.vehicle.getSensor().getDiameter() * 0.7
 		self.makeSpiral(dia)
 		super(Spiral, self).localSearch(localSearch)
 		

@@ -90,8 +90,9 @@ class QuadtreeMap(Searcharea):
 				sensorRange = sensor.getMaxRange()
 				depth = int(round(sensorRange / self.getGridsize()) + 1)
 				adjCells = self.getAdjacentCells(leafPos, depth)
+				priorProb = leaf.getProb()
 				leaf.updateProb(0)
-				if showProb:
+				if showProb  and not priorProb == leaf.getProb():
 					changes.append(self.getCellDTO(leaf.getProb(), xPos, yPos))
 				for cell in adjCells:
 					cpos = cell.getPosition()
@@ -99,8 +100,9 @@ class QuadtreeMap(Searcharea):
 					if dist <= sensorRange:
 						x, y = self.posToCellIndex(cpos)
 						probOfDetection = sensor.probabilityOfDetection(dist)
+						priorProb = self.data[y][x].getProb()
 						self.data[y][x].updateProb(self.data[y][x].getProb() * (1.0 - probOfDetection))
-						if showProb:
+						if showProb and not priorProb == self.data[y][x].getProb():
 							if self.firstTimeZeroProb:
 								changes.append(self.getCellDTO(self.data[y][x].getProb(), x, y))
 				if not self.firstTimeZeroProb and showProb:
