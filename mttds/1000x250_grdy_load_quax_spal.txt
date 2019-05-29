@@ -21,3 +21,26 @@ load		|941.77		|179.098115385		|25.0		|
 quax		|1201.4		|94.5959230769		|37.5		|
 spal		|1259.04	|214.106442308		|25.0		|
 *************************************************************************
+*************************************************************************
+STARTED: 	2019-05-29 06:23:46.373000
+FINISHED:	2019-05-29 06:32:59.694000
+PARAMETERS: 
+Searcharea height (m) : 1000.0	Searcharea width (m) : 250.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : 0	Target Y-coordinate (m) : 499
+Number of runs : 1.0	Gridsize (m) : 15.0
+Sensor radius (m) : 75.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1	SpeedUp-factor : 10
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 499.0
+RUNS PROCESSED: 1
+HEIGHTxWIDTH: 1000x250
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+grdy		|3354.0		|0.811			|107		|
+load		|3218.0		|128.162		|15.0		|
+quax		|3420.0		|77.738			|18.75		|
+spal		|4813.0		|346.009		|15.0		|
+*************************************************************************

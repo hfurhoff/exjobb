@@ -12,7 +12,7 @@ class Quadtree_max(NavigationStrategy):
 		pass
 		
 	def makeArea(self, area, sensor, depth):
-		return QuadtreeMap(area)
+		return QuadtreeMap(area, sensor)
 		
 	def nextCourse(self, vehicle, area):
 		nextPos = self.nextPos(vehicle, area)
@@ -24,7 +24,7 @@ class Quadtree_max(NavigationStrategy):
 		self.targetCell = self.area.getCellForPos(self.target)
 		
 	def nextPos(self, vehicle, area):
-		if self.atPosition(vehicle, area, self.target) or self.targetCell.getProb() * 2 < self.area.getMaxProb():
+		if self.atPosition(vehicle, area, self.target):
 			self.updateTarget()
 		return self.target
 		

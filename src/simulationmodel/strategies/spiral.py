@@ -66,15 +66,31 @@ class Spiral(NavigationStrategy):
 				self.wps.append(newWp)
 		self.target = self.wps.pop(0)
 		
+	def makeCounterClockwiseSpiral(self, dia):
+		pos = self.vehicle.getPosition()
+		self.wps = []
+		r = 0
+		a = 0.0
+		turns = 0
+		newWp = Point(0, 0)
+		while r < self.area.getHalfSideLength():
+			turns = int(a / 360)
+			a += 360 / (8 + 8 * turns)
+			r = dia * (a / 360.0)
+			x = r * np.cos(np.deg2rad(a))
+			y = r * np.sin(np.deg2rad(a))
+			newWp = Point(-x, y).translate(pos.getX(), pos.getY())
+			if self.area.inArea(newWp):
+				self.wps.append(newWp)
+		self.target = self.wps.pop(0)
+		
 	def currAngle(self, pos):
 		return np.degrees(np.arccos(pos.getX() / pos.distTo(Point(0, 0)))) % 360
 
 	def localSearch(self, localSearch):
 		dia = self.vehicle.getSensor().getDiameter() * 0.7
-		#self.makeSpiral(dia)
-		target = self.target
+		self.makeCounterClockwiseSpiral(dia)
 		super(Spiral, self).localSearch(localSearch)
-		self.target = target
 		
 	def test(self):
 		print('SpiralStrat')

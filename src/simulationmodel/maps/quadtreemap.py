@@ -18,8 +18,10 @@ class QuadtreeMap(Searcharea):
 	
 	tree = None
 	changesInStore = []
+	sensor = None
 	
-	def __init__(self, a):
+	def __init__(self, a, sensor):
+		self.sensor = sensor
 		self.height = int(round(a.getHeight()))
 		self.width = int(round(a.getWidth()))
 		self.gridsize = a.getGridsize()
@@ -182,7 +184,7 @@ class QuadtreeMap(Searcharea):
 		return cells
 		
 	def getMargin(self):
-		return self.gridsize * 0.5
+		return self.sensor.getRadius() * 0.5
 
 	def raiseNearby(self, sensor, pos):
 		leaf = self.tree.getLeafForPos(pos)
