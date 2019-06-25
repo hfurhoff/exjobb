@@ -166,5 +166,6 @@ class MatrixMap(Searcharea):
 					self.data[y][x] = 0
 				else:
 					if not self.data[y][x] == 0:
-						self.data[y][x] = self.data[y][x] + (sensor.getRadiusProb() - probOfDetection) + 0.5
+						newProb = min([1.0, self.data[y][x] + (sensor.getRadiusProb() - probOfDetection) + 0.5])
+						self.data[y][x] = newProb
 				self.changesInStore.append(self.getCellDTO(self.data[y][x], x, y))

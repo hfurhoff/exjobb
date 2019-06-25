@@ -206,5 +206,6 @@ class QuadtreeMap(Searcharea):
 				else:
 					cProb = self.data[y][x].getProb()
 					if not cProb == 0:
-						self.data[y][x].updateProb(cProb + (sensor.getRadiusProb() - probOfDetection) + 0.5)
+						newProb = min([1.0, cProb + (sensor.getRadiusProb() - probOfDetection) + 0.5])
+						self.data[y][x].updateProb(newProb)
 				self.changesInStore.append(self.getCellDTO(self.data[y][x].getProb(), x, y))

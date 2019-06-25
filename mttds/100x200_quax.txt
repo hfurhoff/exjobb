@@ -1,0 +1,40 @@
+*************************************************************************
+STARTED: 	2019-06-18 16:21:27.850000
+FINISHED:	2019-06-18 16:21:30.282000
+PARAMETERS: 
+Searcharea height (m) : 100.0	Searcharea width (m) : 200.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 4.0	Gridsize (m) : 5.0
+Sensor radius (m) : 10.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1	SpeedUp-factor : 2
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 34.63447414986269
+RUNS PROCESSED: 4
+HEIGHTxWIDTH: 100x200
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+quax		|167.0		|0.552			|7.5		|
+*************************************************************************
+*************************************************************************
+STARTED: 	2019-06-18 16:25:40.413000
+FINISHED:	2019-06-18 16:25:45.878000
+PARAMETERS: 
+Searcharea height (m) : 100.0	Searcharea width (m) : 200.0
+Initial course (degrees) : r	Vehicle max speed (m/s) : 1
+Target X-coordinate (m) : r	Target Y-coordinate (m) : r
+Number of runs : 4.0	Gridsize (m) : 5.0
+Sensor radius (m) : 10.0	Turningradius (degrees/second) : 25
+Lookahead-depth (times sensor-reach) : 1	SpeedUp-factor : 2
+
+UNITS : SECONDS AND METERS
+AVERAGE DISTANCE TO TARGET FROM ORIGO: 21.405111817241323
+RUNS PROCESSED: 4
+HEIGHTxWIDTH: 100x200
+-------------------------------------------------------------------------
+Strategy	|MTTD		|MEAN PROC TIME		|GRIDSIZE	|
+-------------------------------------------------------------------------
+quax		|321.25		|1.2955			|7.5		|
+*************************************************************************

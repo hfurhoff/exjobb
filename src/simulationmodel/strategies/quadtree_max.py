@@ -19,13 +19,13 @@ class Quadtree_max(NavigationStrategy):
 		course = self.getCourseTowards(nextPos)
 		return course
 		
-	def updateTarget(self):
-		self.target = self.area.getMaxPos()
-		self.targetCell = self.area.getCellForPos(self.target)
+	def updateTarget(self, area):
+		self.target = area.getMaxPos()
+		self.targetCell = area.getCellForPos(self.target)
 		
 	def nextPos(self, vehicle, area):
 		if self.atPosition(vehicle, area, self.target):
-			self.updateTarget()
+			self.updateTarget(area)
 		return self.target
 		
 	def test(self):

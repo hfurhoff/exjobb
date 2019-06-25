@@ -130,14 +130,13 @@ class Tree():
 	def updateProb(self, oldProb, newProb, childKey):
 		diff = oldProb - newProb
 		self.totProb = self.totProb - diff
-		if self.maxKey == childKey and self.maxProb == oldProb:
-			self.maxKey = childKey
-			self.maxProb = newProb
-			for key in self.keys:
-				prob = self.children[key].getMaxProb()
-				if prob > self.maxProb:
-					self.maxProb = prob
-					self.maxKey = key
+		self.maxKey = childKey
+		self.maxProb = newProb
+		for key in self.keys:
+			prob = self.children[key].getMaxProb()
+			if prob > self.maxProb:
+				self.maxProb = prob
+				self.maxKey = key
 		if self.parent != None:
 			self.parent.updateProb(oldProb, newProb, self.key)
 			
@@ -192,7 +191,6 @@ class Leaf():
 		
 	def updateProb(self, newProb):
 		oldProb = self.getProb()
-		diff = oldProb - newProb
 		self.cell.setProb(newProb)
 		if self.parent != None:
 			self.parent.updateProb(oldProb, newProb, self.key)

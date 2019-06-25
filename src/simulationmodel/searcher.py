@@ -68,7 +68,7 @@ class Searcher():
 		self.updateSearch(showProb)
 		if foundTarget:
 			self.moveVehicleTowardsTarget()
-			return		
+			return
 
 		currentSpeed = self.vehicle.getCurrentSpeed()
 		self.vehicle.setDesiredSpeed(0)
@@ -122,10 +122,8 @@ class Searcher():
 		self.strategy.localSearch(True)
 		showProb = True
 		while not self.strongConnection():
-			#print('local search')
 			if self.foundTarget():
 				self.area.raiseNearby(self.sensor, self.vehicle.getPosition())
-				#print('near target')
 			course = self.strategy.nextCourse(self.vehicle, self.area)
 			self.vehicle.setCourse(course)
 			if not self.area.isCoverage():
@@ -177,8 +175,6 @@ class Searcher():
 			found = vpx == tpx and vpy == tpy
 		if isinstance(self.strategy, Greedy) and not self.strongConnection():
 			found = False
-		'''if found:
-			print('got connection')'''
 		return found
 		
 	def strongConnection(self):
